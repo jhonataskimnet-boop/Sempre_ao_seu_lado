@@ -3,15 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sempre com Você</title>
+  <title>Sempre Ao Seu Lado</title>
   <style>
     :root {
-      --bg-top: #fff0f5;
-      --bg-bottom: #ffe4ec;
-      --card-bg: rgba(255, 255, 255, 0.88);
-      --text-main: #4a2c3a;
+      --bg-1: #fff1f5;
+      --bg-2: #ffe4ec;
+      --card: rgba(255, 255, 255, 0.92);
+      --text: #4a2536;
       --accent: #e11d48;
-      --accent-soft: #fda4af;
+      --accent-light: #fda4af;
+      --sky: #e0f2fe;
     }
 
     * {
@@ -24,147 +25,202 @@
     body {
       font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
       min-height: 100vh;
-      background: linear-gradient(180deg, var(--bg-top), var(--bg-bottom));
-      color: var(--text-main);
+      background: linear-gradient(180deg, var(--bg-1), var(--bg-2));
+      color: var(--text);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
+      padding: 16px;
+      overflow-x: hidden;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 520px;
+      background: var(--card);
+      border: 1.5px solid var(--accent-light);
+      border-radius: 24px;
+      padding: 22px;
+      box-shadow: 0 14px 36px rgba(225, 29, 72, 0.14);
+      text-align: center;
+      position: relative;
+    }
+
+    .stage-badge {
+      display: inline-block;
+      background: #ffe4e6;
+      color: var(--accent);
+      font-weight: 700;
+      font-size: 0.78rem;
+      padding: 4px 12px;
+      border-radius: 999px;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    h1 {
+      font-size: 1.35rem;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      font-size: 0.92rem;
+      opacity: 0.85;
+      margin-bottom: 16px;
+      line-height: 1.4;
+    }
+
+    .message-box {
+      min-height: 54px;
+      background: #fff5f7;
+      border: 1px dashed var(--accent-light);
+      border-radius: 14px;
+      padding: 10px 14px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.94rem;
+      font-weight: 500;
+      color: var(--text);
+      transition: all 0.25s ease;
+    }
+
+    /* FASE 1: Arena de Corações */
+    .heart-arena {
+      position: relative;
+      width: 100%;
+      height: 260px;
+      background: linear-gradient(180deg, #fff9fb, #ffeef3);
+      border-radius: 18px;
+      border: 1px solid #fecdd3;
+      overflow: hidden;
+    }
+
+    .floating-heart {
+      position: absolute;
+      font-size: 2.1rem;
+      cursor: pointer;
+      transition: transform 0.15s ease;
+      animation: floatBob 2s infinite ease-in-out;
+    }
+
+    .floating-heart:hover {
+      transform: scale(1.2);
+    }
+
+    @keyframes floatBob {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+
+    /* FASE 2: Caminho com Nuvens */
+    .path-arena {
+      position: relative;
+      width: 100%;
+      height: 230px;
+      background: linear-gradient(180deg, #e0f2fe 0%, #f0f9ff 75%, #dcfce7 75%, #bbf7d0 100%);
+      border-radius: 18px;
+      border: 1px solid #bae6fd;
       overflow: hidden;
       padding: 16px;
     }
 
-    .hud {
-      position: relative;
-      z-index: 10;
-      background: var(--card-bg);
-      backdrop-filter: blur(8px);
-      border: 1px solid var(--accent-soft);
-      border-radius: 20px;
-      padding: 14px 22px;
-      text-align: center;
-      box-shadow: 0 10px 30px rgba(225, 29, 72, 0.12);
-      max-width: 460px;
-      width: 100%;
+    .walker {
+      position: absolute;
+      bottom: 42px;
+      left: 16px;
+      font-size: 2.3rem;
+      transition: left 0.55s ease;
+      z-index: 3;
     }
 
-    .hud h1 {
-      font-size: 1.25rem;
-      margin-bottom: 6px;
-    }
-
-    .hud p {
-      font-size: 0.92rem;
-      opacity: 0.85;
-      margin-bottom: 10px;
-    }
-
-    .progress-wrap {
-      width: 100%;
-      height: 10px;
-      background: #ffe4e6;
-      border-radius: 999px;
-      overflow: hidden;
-      margin-bottom: 10px;
-    }
-
-    .progress-bar {
-      height: 100%;
-      width: 0%;
-      background: linear-gradient(90deg, #fb7185, #e11d48);
-      transition: width 0.3s ease;
-    }
-
-    .status {
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: var(--accent);
-    }
-
-    .floating-message {
-      position: fixed;
-      left: 50%;
-      bottom: 28px;
-      transform: translateX(-50%) translateY(10px);
-      background: var(--card-bg);
-      border: 1px solid var(--accent-soft);
-      padding: 12px 20px;
-      border-radius: 16px;
-      box-shadow: 0 8px 24px rgba(74, 44, 58, 0.14);
-      font-size: 0.98rem;
-      font-weight: 500;
-      text-align: center;
-      max-width: 90%;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.25s ease, transform 0.25s ease;
-      z-index: 20;
-    }
-
-    .floating-message.show {
-      opacity: 1;
-      transform: translateX(-50%) translateY(0);
-    }
-
-    .heart-item {
-      position: fixed;
+    .goal-flag {
+      position: absolute;
+      bottom: 42px;
+      right: 16px;
       font-size: 2.2rem;
+      z-index: 2;
+    }
+
+    .cloud-obstacle {
+      position: absolute;
+      bottom: 46px;
+      font-size: 2.4rem;
       cursor: pointer;
-      z-index: 5;
-      filter: drop-shadow(0 6px 12px rgba(225, 29, 72, 0.25));
-      transition: transform 0.15s ease;
-      animation: pulse 1.8s infinite ease-in-out;
+      z-index: 4;
+      transition: transform 0.2s ease, opacity 0.3s ease;
+      filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.12));
     }
 
-    .heart-item:hover {
-      transform: scale(1.2);
+    .cloud-obstacle:hover {
+      transform: scale(1.15);
     }
 
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.1); }
+    .cloud-label {
+      display: block;
+      font-size: 0.68rem;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 2px 6px;
+      border-radius: 8px;
+      color: #334155;
+      font-weight: 600;
+      margin-top: -4px;
     }
 
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(74, 44, 58, 0.45);
-      backdrop-filter: blur(4px);
-      display: none;
+    /* FASE 3: Memória */
+    .memory-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .mem-card {
+      height: 92px;
+      background: linear-gradient(135deg, #fb7185, #e11d48);
+      border-radius: 14px;
+      display: flex;
       align-items: center;
       justify-content: center;
-      padding: 20px;
-      z-index: 30;
+      font-size: 1.9rem;
+      color: #fff;
+      cursor: pointer;
+      box-shadow: 0 6px 14px rgba(225, 29, 72, 0.18);
+      transition: transform 0.2s ease, background 0.2s ease;
     }
 
-    .modal-backdrop.open {
-      display: flex;
+    .mem-card.revealed,
+    .mem-card.matched {
+      background: #fff1f2;
+      border: 2px solid var(--accent-light);
+      color: var(--text);
+      cursor: default;
     }
 
-    .modal {
-      background: #fff;
-      border-radius: 24px;
-      padding: 28px 24px;
-      max-width: 440px;
-      width: 100%;
-      text-align: center;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
-      border: 2px solid var(--accent-soft);
+    .mem-card.matched {
+      background: #dcfce7;
+      border-color: #86efac;
     }
 
-    .modal h2 {
-      color: var(--accent);
-      margin-bottom: 12px;
-      font-size: 1.4rem;
+    /* Carta Final */
+    .final-letter {
+      text-align: left;
+      background: #fff9fa;
+      border: 1px solid #fecdd3;
+      border-radius: 16px;
+      padding: 18px;
+      line-height: 1.65;
+      font-size: 0.96rem;
+      margin-bottom: 18px;
     }
 
-    .modal p {
-      line-height: 1.6;
-      margin-bottom: 20px;
-      font-size: 0.98rem;
+    .final-letter p + p {
+      margin-top: 10px;
     }
 
-    button {
+    .btn {
       background: var(--accent);
       color: #fff;
       border: none;
@@ -173,124 +229,202 @@
       font-size: 0.95rem;
       font-weight: 600;
       cursor: pointer;
+      margin-top: 14px;
       transition: background 0.2s ease, transform 0.15s ease;
     }
 
-    button:hover {
+    .btn:hover {
       background: #be123c;
       transform: translateY(-1px);
+    }
+
+    .hidden {
+      display: none !important;
     }
   </style>
 </head>
 <body>
-  <div class="hud">
-    <h1>Toque nos corações de carinho</h1>
-    <p>Cada um guarda um lembrete do quanto você é especial para mim.</p>
-    <div class="progress-wrap">
-      <div class="progress-bar" id="progressBar"></div>
+  <div class="container">
+    <span class="stage-badge" id="stageBadge">Fase 1 de 3</span>
+    <h1 id="stageTitle">Colete os Lembretes de Carinho</h1>
+    <p class="subtitle" id="stageSubtitle">Toque nos corações que aparecem para guardar cada mensagem.</p>
+
+    <div class="message-box" id="messageBox">
+      Toque no primeiro coração para começar ✨
     </div>
-    <div class="status" id="statusText">0 / 8 corações coletados</div>
-  </div>
 
-  <div class="floating-message" id="floatingMessage"></div>
+    <!-- FASE 1 -->
+    <div class="heart-arena" id="stage1Area"></div>
 
-  <div class="modal-backdrop" id="endModal">
-    <div class="modal">
-      <h2>Você nunca está sozinha nisso</h2>
-      <p>
-        Não importa o dia, o cansaço ou o tamanho do desafio: eu te amo muito e vou
-        sempre estar aqui do seu lado para te apoiar, ouvir e ajudar no que precisar.
-      </p>
-      <button id="restartBtn">Jogar de novo</button>
+    <!-- FASE 2 -->
+    <div class="path-arena hidden" id="stage2Area">
+      <div class="walker" id="walker">🚶‍♀️</div>
+      <div class="goal-flag">🏡💖</div>
+    </div>
+
+    <!-- FASE 3 -->
+    <div class="memory-grid hidden" id="stage3Area"></div>
+
+    <!-- FINAL -->
+    <div class="hidden" id="finalArea">
+      <div class="final-letter">
+        <p><strong>Para você, com todo o meu amor:</strong></p>
+        <p>
+          Eu fiz esse pequeno jogo só para você lembrar, de um jeito leve, do quanto você é amada e importante para mim.
+        </p>
+        <p>
+          Nos dias fáceis ou nos dias em que tudo parecer pesado demais, eu sempre vou estar aqui — para te ouvir, segurar a sua mão e te ajudar no que você precisar. Você nunca precisa enfrentar nada sozinha.
+        </p>
+      </div>
+      <button class="btn" id="restartBtn">Jogar novamente</button>
     </div>
   </div>
 
   <script>
-    const GOAL = 8;
+    const stageBadge = document.getElementById("stageBadge");
+    const stageTitle = document.getElementById("stageTitle");
+    const stageSubtitle = document.getElementById("stageSubtitle");
+    const messageBox = document.getElementById("messageBox");
 
-    const MESSAGES = [
-      "Você é muito amada, hoje e em todos os dias.",
-      "Se precisar de ajuda com qualquer coisa, é só me chamar.",
-      "Eu tô aqui com você, mesmo nos dias mais corridos ou difíceis.",
-      "Você não precisa carregar tudo sozinha.",
-      "Seu sorriso e seu jeito iluminam o meu mundo.",
-      "Pode contar comigo sempre, sem hesitar.",
-      "Cada detalhe seu importa muito para mim.",
-      "Onde quer que você vá, meu apoio vai junto."
-    ];
-
-    const ICONS = ["💖", "💗", "💕", "✨", "🌸"];
-
-    let collected = 0;
-    let messageTimeout = null;
-
-    const progressBar = document.getElementById("progressBar");
-    const statusText = document.getElementById("statusText");
-    const floatingMessage = document.getElementById("floatingMessage");
-    const endModal = document.getElementById("endModal");
+    const stage1Area = document.getElementById("stage1Area");
+    const stage2Area = document.getElementById("stage2Area");
+    const stage3Area = document.getElementById("stage3Area");
+    const finalArea = document.getElementById("finalArea");
     const restartBtn = document.getElementById("restartBtn");
 
-    function showMessage(text) {
-      floatingMessage.textContent = text;
-      floatingMessage.classList.add("show");
-      clearTimeout(messageTimeout);
-      messageTimeout = setTimeout(() => {
-        floatingMessage.classList.remove("show");
-      }, 3200);
-    }
+    /* ---------------- FASE 1 ---------------- */
+    const HEART_MESSAGES = [
+      "Você é muito amada, exatamente do jeitinho que você é.",
+      "Sempre que precisar de ajuda, pode me chamar sem pensar duas vezes.",
+      "Seu sorriso muda o meu dia inteiro para melhor.",
+      "Eu tenho muito orgulho de você e de tudo o que você faz.",
+      "Conte comigo hoje, amanhã e em qualquer momento."
+    ];
+    let heartsCollected = 0;
 
-    function updateHud() {
-      const percent = Math.min((collected / GOAL) * 100, 100);
-      progressBar.style.width = `${percent}%`;
-      statusText.textContent = `${collected} / ${GOAL} corações coletados`;
+    function startStage1() {
+      stageBadge.textContent = "Fase 1 de 3";
+      stageTitle.textContent = "Colete os Lembretes de Carinho";
+      stageSubtitle.textContent = "Toque nos 5 corações para revelar o que eu sinto por você.";
+      messageBox.textContent = "Toque nos corações dentro do quadro ✨";
+
+      stage1Area.classList.remove("hidden");
+      stage2Area.classList.add("hidden");
+      stage3Area.classList.add("hidden");
+      finalArea.classList.add("hidden");
+
+      heartsCollected = 0;
+      stage1Area.innerHTML = "";
+      spawnHeart();
+      spawnHeart();
     }
 
     function spawnHeart() {
-      if (collected >= GOAL) return;
-
+      if (heartsCollected >= HEART_MESSAGES.length) return;
+      const icons = ["💖", "💗", "💕", "✨", "🌸"];
       const el = document.createElement("div");
-      el.className = "heart-item";
-      el.textContent = ICONS[Math.floor(Math.random() * ICONS.length)];
+      el.className = "floating-heart";
+      el.textContent = icons[Math.floor(Math.random() * icons.length)];
 
-      const padding = 70;
-      const x = padding + Math.random() * Math.max(window.innerWidth - padding * 2, 120);
-      const y = padding + 90 + Math.random() * Math.max(window.innerHeight - padding * 2 - 140, 120);
-
-      el.style.left = `${x}px`;
-      el.style.top = `${y}px`;
+      const maxX = stage1Area.clientWidth - 48;
+      const maxY = stage1Area.clientHeight - 48;
+      el.style.left = `${14 + Math.random() * Math.max(maxX - 28, 60)}px`;
+      el.style.top = `${14 + Math.random() * Math.max(maxY - 28, 60)}px`;
 
       el.addEventListener("click", () => {
-        if (collected >= GOAL) return;
-        const msg = MESSAGES[collected % MESSAGES.length];
-        collected += 1;
-        updateHud();
-        showMessage(msg);
+        if (heartsCollected >= HEART_MESSAGES.length) return;
+        messageBox.textContent = HEART_MESSAGES[heartsCollected];
+        heartsCollected++;
         el.remove();
 
-        if (collected >= GOAL) {
-          setTimeout(() => {
-            endModal.classList.add("open");
-          }, 900);
+        if (heartsCollected >= HEART_MESSAGES.length) {
+          setTimeout(startStage2, 1400);
         } else {
           spawnHeart();
         }
       });
 
-      document.body.appendChild(el);
+      stage1Area.appendChild(el);
     }
 
-    function resetGame() {
-      document.querySelectorAll(".heart-item").forEach((item) => item.remove());
-      collected = 0;
-      endModal.classList.remove("open");
-      updateHud();
-      spawnHeart();
-      spawnHeart();
+    /* ---------------- FASE 2 ---------------- */
+    const CLOUDS_DATA = [
+      { label: "Cansaço", msg: "Quando o dia cansar, eu tô aqui para te acolher e te ajudar." },
+      { label: "Preocupação", msg: "Não precisa carregar tudo sozinha — a gente resolve juntos." },
+      { label: "Dúvidas", msg: "Qualquer problema ou escolha difícil, eu fico do seu lado." }
+    ];
+    let cloudsCleared = 0;
+
+    function startStage2() {
+      stageBadge.textContent = "Fase 2 de 3";
+      stageTitle.textContent = "Atravessando Juntos";
+      stageSubtitle.textContent = "Toque nas nuvens no caminho para eu te ajudar a dissipar cada uma.";
+      messageBox.textContent = "Toque na primeira nuvem para abrir caminho ☀️";
+
+      stage1Area.classList.add("hidden");
+      stage2Area.classList.remove("hidden");
+
+      cloudsCleared = 0;
+      const walker = document.getElementById("walker");
+      walker.style.left = "16px";
+
+      stage2Area.querySelectorAll(".cloud-obstacle").forEach((c) => c.remove());
+
+      const positions = ["24%", "47%", "69%"];
+      CLOUDS_DATA.forEach((item, index) => {
+        const cloud = document.createElement("div");
+        cloud.className = "cloud-obstacle";
+        cloud.style.left = positions[index];
+        cloud.innerHTML = `☁️<span class="cloud-label">${item.label}</span>`;
+
+        cloud.addEventListener("click", () => {
+          if (index !== cloudsCleared) {
+            messageBox.textContent = "Vamos uma nuvem de cada vez, estou bem aqui com você 💛";
+            return;
+          }
+          messageBox.textContent = item.msg;
+          cloud.style.opacity = "0";
+          setTimeout(() => cloud.remove(), 250);
+          cloudsCleared++;
+
+          const stepPositions = ["34%", "56%", "78%"];
+          walker.style.left = stepPositions[index];
+
+          if (cloudsCleared === CLOUDS_DATA.length) {
+            setTimeout(startStage3, 1600);
+          }
+        });
+
+        stage2Area.appendChild(cloud);
+      });
     }
 
-    restartBtn.addEventListener("click", resetGame);
+    /* ---------------- FASE 3 ---------------- */
+    const PAIRS = [
+      { icon: "🤝", msg: "Parceria: você sempre pode contar com a minha ajuda." },
+      { icon: "❤️", msg: "Amor: meu carinho por você só cresce a cada dia." },
+      { icon: "🌟", msg: "Apoio: eu acredito em você e torço por cada passo seu." }
+    ];
+    let flipped = [];
+    let matchedCount = 0;
+    let lockBoard = false;
 
-    resetGame();
-  </script>
-</body>
-</html>
+    function startStage3() {
+      stageBadge.textContent = "Fase 3 de 3";
+      stageTitle.textContent = "Memória do Nosso Cuidado";
+      stageSubtitle.textContent = "Encontre os 3 pares para desbloquear a mensagem final.";
+      messageBox.textContent = "Vire duas cartas para encontrar os pares 💌";
+
+      stage2Area.classList.add("hidden");
+      stage3Area.classList.remove("hidden");
+
+      flipped = [];
+      matchedCount = 0;
+      lockBoard = false;
+      stage3Area.innerHTML = "";
+
+      const deck = [...PAIRS, ...PAIRS].sort(() => Math.random() - 0.5);
+
+      deck.forEach((item) => {
+        const card = document.createElement("div");
+        card.className = "mem-
