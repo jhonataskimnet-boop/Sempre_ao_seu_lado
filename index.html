@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sempre Ao Seu Lado</title>
+  <title>Sempre Ao Seu Lado — Raely</title>
   <style>
     :root {
       --bg-1: #fff1f5;
@@ -12,7 +12,6 @@
       --text: #4a2536;
       --accent: #e11d48;
       --accent-light: #fda4af;
-      --sky: #e0f2fe;
     }
 
     * {
@@ -47,17 +46,41 @@
       position: relative;
     }
 
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
     .stage-badge {
       display: inline-block;
       background: #ffe4e6;
       color: var(--accent);
       font-weight: 700;
       font-size: 0.78rem;
-      padding: 4px 12px;
+      padding: 5px 12px;
       border-radius: 999px;
-      margin-bottom: 8px;
       text-transform: uppercase;
       letter-spacing: 0.04em;
+    }
+
+    .audio-btn {
+      background: #fff5f7;
+      color: var(--accent);
+      border: 1px solid var(--accent-light);
+      border-radius: 999px;
+      padding: 5px 12px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.15s ease;
+    }
+
+    .audio-btn:hover {
+      background: #ffe4e6;
+      transform: translateY(-1px);
     }
 
     h1 {
@@ -245,9 +268,13 @@
 </head>
 <body>
   <div class="container">
-    <span class="stage-badge" id="stageBadge">Fase 1 de 3</span>
-    <h1 id="stageTitle">Colete os Lembretes de Carinho</h1>
-    <p class="subtitle" id="stageSubtitle">Toque nos corações que aparecem para guardar cada mensagem.</p>
+    <div class="top-bar">
+      <span class="stage-badge" id="stageBadge">Fase 1 de 3</span>
+      <button class="audio-btn" id="audioBtn" type="button">🎵 Música: Ligada</button>
+    </div>
+
+    <h1 id="stageTitle">Para Você, Raely</h1>
+    <p class="subtitle" id="stageSubtitle">Toque nos corações que aparecem para revelar cada mensagem.</p>
 
     <div class="message-box" id="messageBox">
       Toque no primeiro coração para começar ✨
@@ -268,12 +295,12 @@
     <!-- FINAL -->
     <div class="hidden" id="finalArea">
       <div class="final-letter">
-        <p><strong>Para você, com todo o meu amor:</strong></p>
+        <p><strong>Raely, com todo o meu amor:</strong></p>
         <p>
-          Eu fiz esse pequeno jogo só para você lembrar, de um jeito leve, do quanto você é amada e importante para mim.
+          Eu fiz esse pequeno jogo só para você lembrar, de um jeito leve, do quanto você é amada e especial para mim.
         </p>
         <p>
-          Nos dias fáceis ou nos dias em que tudo parecer pesado demais, eu sempre vou estar aqui — para te ouvir, segurar a sua mão e te ajudar no que você precisar. Você nunca precisa enfrentar nada sozinha.
+          Nos dias fáceis ou nos dias em que tudo parecer pesado demais, Raely, eu sempre vou estar aqui — para te ouvir, segurar a sua mão e te ajudar no que você precisar. Você nunca precisa enfrentar nada sozinha.
         </p>
       </div>
       <button class="btn" id="restartBtn">Jogar novamente</button>
@@ -281,6 +308,109 @@
   </div>
 
   <script>
+    /* ---------------- MÚSICA SUAVE (WEB AUDIO API) ---------------- */
+    const audioBtn = document.getElementById("audioBtn");
+    let audioCtx = null;
+    let musicEnabled = true;
+    let musicInterval = null;
+    let noteStep = 0;
+
+    // Arpejo calmo em Fá maior / Ré menor / Si bemol / Dó (frequências em Hz)
+    const MELODY_NOTES = [
+      349.23, 440.00, 523.25, 659.25,
+      293.66, 349.23, 440.00, 523.25,
+      233.08, 293.66, 349.23, 440.00,
+      261.63, 329.63, 392.00, 523.25
+    ];
+
+    function ensureAudioContext() {
+      if (!audioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) {
+          audioCtx = new AudioContextClass();
+        }
+      }
+      if (audioCtx && audioCtx.state === "suspended") {
+        audioCtx.resume().catch(() => {});
+      }
+    }
+
+    function playSoftTone(freq, duration = 1.1, volume = 0.035, type = "sine") {
+      if (!musicEnabled || !audioCtx) return;
+
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, now);
+
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(volume, now + 0.08);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      osc.start(now);
+      osc.stop(now + duration + 0.05);
+    }
+
+    function playChimeEffect() {
+      ensureAudioContext();
+      playSoftTone(587.33, 0.35, 0.04, "triangle");
+      setTimeout(() => playSoftTone(880.00, 0.45, 0.03, "sine"), 90);
+    }
+
+    function startBackgroundMusic() {
+      stopBackgroundMusic();
+      if (!musicEnabled) return;
+
+      musicInterval = setInterval(() => {
+        if (!musicEnabled || !audioCtx || audioCtx.state !== "running") return;
+        const freq = MELODY_NOTES[noteStep % MELODY_NOTES.length];
+        playSoftTone(freq, 1.35, 0.028, "sine");
+        noteStep++;
+      }, 620);
+    }
+
+    function stopBackgroundMusic() {
+      if (musicInterval) {
+        clearInterval(musicInterval);
+        musicInterval = null;
+      }
+    }
+
+    function updateAudioButton() {
+      audioBtn.textContent = musicEnabled ? "🎵 Música: Ligada" : "🔇 Música: Desligada";
+    }
+
+    audioBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      musicEnabled = !musicEnabled;
+      updateAudioButton();
+
+      if (musicEnabled) {
+        ensureAudioContext();
+        startBackgroundMusic();
+        playChimeEffect();
+      } else {
+        stopBackgroundMusic();
+      }
+    });
+
+    // Inicia o contexto de áudio no primeiro clique/toque na página
+    document.addEventListener("pointerdown", () => {
+      if (!musicEnabled) return;
+      ensureAudioContext();
+      if (!musicInterval) {
+        startBackgroundMusic();
+      }
+    }, { once: true });
+
+    updateAudioButton();
+
+    /* ---------------- JOGO ---------------- */
     const stageBadge = document.getElementById("stageBadge");
     const stageTitle = document.getElementById("stageTitle");
     const stageSubtitle = document.getElementById("stageSubtitle");
@@ -294,17 +424,17 @@
 
     /* ---------------- FASE 1 ---------------- */
     const HEART_MESSAGES = [
-      "Você é muito amada, exatamente do jeitinho que você é.",
+      "Raely, você é muito amada, exatamente do jeitinho que você é.",
       "Sempre que precisar de ajuda, pode me chamar sem pensar duas vezes.",
       "Seu sorriso muda o meu dia inteiro para melhor.",
       "Eu tenho muito orgulho de você e de tudo o que você faz.",
-      "Conte comigo hoje, amanhã e em qualquer momento."
+      "Conte comigo hoje, amanhã e em qualquer momento, Raely."
     ];
     let heartsCollected = 0;
 
     function startStage1() {
       stageBadge.textContent = "Fase 1 de 3";
-      stageTitle.textContent = "Colete os Lembretes de Carinho";
+      stageTitle.textContent = "Para Você, Raely";
       stageSubtitle.textContent = "Toque nos 5 corações para revelar o que eu sinto por você.";
       messageBox.textContent = "Toque nos corações dentro do quadro ✨";
 
@@ -333,6 +463,7 @@
 
       el.addEventListener("click", () => {
         if (heartsCollected >= HEART_MESSAGES.length) return;
+        playChimeEffect();
         messageBox.textContent = HEART_MESSAGES[heartsCollected];
         heartsCollected++;
         el.remove();
@@ -349,7 +480,7 @@
 
     /* ---------------- FASE 2 ---------------- */
     const CLOUDS_DATA = [
-      { label: "Cansaço", msg: "Quando o dia cansar, eu tô aqui para te acolher e te ajudar." },
+      { label: "Cansaço", msg: "Quando o dia cansar, Raely, eu tô aqui para te acolher e te ajudar." },
       { label: "Preocupação", msg: "Não precisa carregar tudo sozinha — a gente resolve juntos." },
       { label: "Dúvidas", msg: "Qualquer problema ou escolha difícil, eu fico do seu lado." }
     ];
@@ -382,6 +513,7 @@
             messageBox.textContent = "Vamos uma nuvem de cada vez, estou bem aqui com você 💛";
             return;
           }
+          playChimeEffect();
           messageBox.textContent = item.msg;
           cloud.style.opacity = "0";
           setTimeout(() => cloud.remove(), 250);
@@ -401,7 +533,7 @@
 
     /* ---------------- FASE 3 ---------------- */
     const PAIRS = [
-      { icon: "🤝", msg: "Parceria: você sempre pode contar com a minha ajuda." },
+      { icon: "🤝", msg: "Parceria: Raely, você sempre pode contar com a minha ajuda." },
       { icon: "❤️", msg: "Amor: meu carinho por você só cresce a cada dia." },
       { icon: "🌟", msg: "Apoio: eu acredito em você e torço por cada passo seu." }
     ];
@@ -427,4 +559,70 @@
 
       deck.forEach((item) => {
         const card = document.createElement("div");
-        card.className = "mem-
+        card.className = "mem-card";
+        card.textContent = "?";
+
+        card.addEventListener("click", () => {
+          if (lockBoard || card.classList.contains("revealed") || card.classList.contains("matched")) {
+            return;
+          }
+
+          ensureAudioContext();
+          playSoftTone(523.25, 0.2, 0.025, "sine");
+          card.classList.add("revealed");
+          card.textContent = item.icon;
+          flipped.push({ card, item });
+
+          if (flipped.length === 2) {
+            lockBoard = true;
+            const [first, second] = flipped;
+
+            if (first.item.icon === second.item.icon) {
+              playChimeEffect();
+              first.card.classList.add("matched");
+              second.card.classList.add("matched");
+              messageBox.textContent = first.item.msg;
+              matchedCount++;
+              flipped = [];
+              lockBoard = false;
+
+              if (matchedCount === PAIRS.length) {
+                setTimeout(showFinal, 1300);
+              }
+            } else {
+              setTimeout(() => {
+                first.card.classList.remove("revealed");
+                second.card.classList.remove("revealed");
+                first.card.textContent = "?";
+                second.card.textContent = "?";
+                flipped = [];
+                lockBoard = false;
+              }, 700);
+            }
+          }
+        });
+
+        stage3Area.appendChild(card);
+      });
+    }
+
+    function showFinal() {
+      playChimeEffect();
+      stageBadge.textContent = "Concluído 💖";
+      stageTitle.textContent = "Para Você, Raely";
+      stageSubtitle.textContent = "Lembre-se sempre disso:";
+      messageBox.classList.add("hidden");
+      stage3Area.classList.add("hidden");
+      finalArea.classList.remove("hidden");
+    }
+
+    restartBtn.addEventListener("click", () => {
+      playChimeEffect();
+      messageBox.classList.remove("hidden");
+      startStage1();
+    });
+
+    startStage1();
+  </script>
+</body>
+</html>
