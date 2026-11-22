@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sempre com Você</title>
+  <style>
+    :root {
+      --bg-top: #fff0f5;
+      --bg-bottom: #ffe4ec;
+      --card-bg: rgba(255, 255, 255, 0.88);
+      --text-main: #4a2c3a;
+      --accent: #e11d48;
+      --accent-soft: #fda4af;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      background: linear-gradient(180deg, var(--bg-top), var(--bg-bottom));
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      padding: 16px;
+    }
+
+    .hud {
+      position: relative;
+      z-index: 10;
+      background: var(--card-bg);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--accent-soft);
+      border-radius: 20px;
+      padding: 14px 22px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(225, 29, 72, 0.12);
+      max-width: 460px;
+      width: 100%;
+    }
+
+    .hud h1 {
+      font-size: 1.25rem;
+      margin-bottom: 6px;
+    }
+
+    .hud p {
+      font-size: 0.92rem;
+      opacity: 0.85;
+      margin-bottom: 10px;
+    }
+
+    .progress-wrap {
+      width: 100%;
+      height: 10px;
+      background: #ffe4e6;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #fb7185, #e11d48);
+      transition: width 0.3s ease;
+    }
+
+    .status {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    .floating-message {
+      position: fixed;
+      left: 50%;
+      bottom: 28px;
+      transform: translateX(-50%) translateY(10px);
+      background: var(--card-bg);
+      border: 1px solid var(--accent-soft);
+      padding: 12px 20px;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(74, 44, 58, 0.14);
+      font-size: 0.98rem;
+      font-weight: 500;
+      text-align: center;
+      max-width: 90%;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+      z-index: 20;
+    }
+
+    .floating-message.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .heart-item {
+      position: fixed;
+      font-size: 2.2rem;
+      cursor: pointer;
+      z-index: 5;
+      filter: drop-shadow(0 6px 12px rgba(225, 29, 72, 0.25));
+      transition: transform 0.15s ease;
+      animation: pulse 1.8s infinite ease-in-out;
+    }
+
+    .heart-item:hover {
+      transform: scale(1.2);
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(74, 44, 58, 0.45);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 30;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal {
+      background: #fff;
+      border-radius: 24px;
+      padding: 28px 24px;
+      max-width: 440px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+      border: 2px solid var(--accent-soft);
+    }
+
+    .modal h2 {
+      color: var(--accent);
+      margin-bottom: 12px;
+      font-size: 1.4rem;
+    }
+
+    .modal p {
+      line-height: 1.6;
+      margin-bottom: 20px;
+      font-size: 0.98rem;
+    }
+
+    button {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 999px;
+      padding: 11px 24px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.15s ease;
+    }
+
+    button:hover {
+      background: #be123c;
+      transform: translateY(-1px);
+    }
+  </style>
+</head>
+<body>
+  <div class="hud">
+    <h1>Toque nos corações de carinho</h1>
+    <p>Cada um guarda um lembrete do quanto você é especial para mim.</p>
+    <div class="progress-wrap">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+    <div class="status" id="statusText">0 / 8 corações coletados</div>
+  </div>
+
+  <div class="floating-message" id="floatingMessage"></div>
+
+  <div class="modal-backdrop" id="endModal">
+    <div class="modal">
+      <h2>Você nunca está sozinha nisso</h2>
+      <p>
+        Não importa o dia, o cansaço ou o tamanho do desafio: eu te amo muito e vou
+        sempre estar aqui do seu lado para te apoiar, ouvir e ajudar no que precisar.
+      </p>
+      <button id="restartBtn">Jogar de novo</button>
+    </div>
+  </div>
+
+  <script>
+    const GOAL = 8;
+
+    const MESSAGES = [
+      "Você é muito amada, hoje e em todos os dias.",
+      "Se precisar de ajuda com qualquer coisa, é só me chamar.",
+      "Eu tô aqui com você, mesmo nos dias mais corridos ou difíceis.",
+      "Você não precisa carregar tudo sozinha.",
+      "Seu sorriso e seu jeito iluminam o meu mundo.",
+      "Pode contar comigo sempre, sem hesitar.",
+      "Cada detalhe seu importa muito para mim.",
+      "Onde quer que você vá, meu apoio vai junto."
+    ];
+
+    const ICONS = ["💖", "💗", "💕", "✨", "🌸"];
+
+    let collected = 0;
+    let messageTimeout = null;
+
+    const progressBar = document.getElementById("progressBar");
+    const statusText = document.getElementById("statusText");
+    const floatingMessage = document.getElementById("floatingMessage");
+    const endModal = document.getElementById("endModal");
+    const restartBtn = document.getElementById("restartBtn");
+
+    function showMessage(text) {
+      floatingMessage.textContent = text;
+      floatingMessage.classList.add("show");
+      clearTimeout(messageTimeout);
+      messageTimeout = setTimeout(() => {
+        floatingMessage.classList.remove("show");
+      }, 3200);
+    }
+
+    function updateHud() {
+      const percent = Math.min((collected / GOAL) * 100, 100);
+      progressBar.style.width = `${percent}%`;
+      statusText.textContent = `${collected} / ${GOAL} corações coletados`;
+    }
+
+    function spawnHeart() {
+      if (collected >= GOAL) return;
+
+      const el = document.createElement("div");
+      el.className = "heart-item";
+      el.textContent = ICONS[Math.floor(Math.random() * ICONS.length)];
+
+      const padding = 70;
+      const x = padding + Math.random() * Math.max(window.innerWidth - padding * 2, 120);
+      const y = padding + 90 + Math.random() * Math.max(window.innerHeight - padding * 2 - 140, 120);
+
+      el.style.left = `${x}px`;
+      el.style.top = `${y}px`;
+
+      el.addEventListener("click", () => {
+        if (collected >= GOAL) return;
+        const msg = MESSAGES[collected % MESSAGES.length];
+        collected += 1;
+        updateHud();
+        showMessage(msg);
+        el.remove();
+
+        if (collected >= GOAL) {
+          setTimeout(() => {
+            endModal.classList.add("open");
+          }, 900);
+        } else {
+          spawnHeart();
+        }
+      });
+
+      document.body.appendChild(el);
+    }
+
+    function resetGame() {
+      document.querySelectorAll(".heart-item").forEach((item) => item.remove());
+      collected = 0;
+      endModal.classList.remove("open");
+      updateHud();
+      spawnHeart();
+      spawnHeart();
+    }
+
+    restartBtn.addEventListener("click", resetGame);
+
+    resetGame();
+  </script>
+</body>
+</html>
