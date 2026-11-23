@@ -2,627 +2,1970 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sempre Ao Seu Lado — Raely</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Sempre Ao Seu Lado — Uma Jornada para Raely</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg-1: #fff1f5;
-      --bg-2: #ffe4ec;
-      --card: rgba(255, 255, 255, 0.92);
-      --text: #4a2536;
-      --accent: #e11d48;
-      --accent-light: #fda4af;
+      --bg-deep: #130e24;
+      --bg-mid: #231942;
+      --bg-warm: #4a2545;
+      --gold: #f6d365;
+      --gold-soft: #fde68a;
+      --rose: #f472b6;
+      --rose-light: #fbcfe8;
+      --lavender: #c4b5fd;
+      --glass-bg: rgba(24, 18, 46, 0.72);
+      --glass-border: rgba(246, 211, 101, 0.35);
+      --text-main: #fff8f3;
+      --text-soft: #e9d5ff;
     }
 
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
+      -webkit-tap-highlight-color: transparent;
       user-select: none;
     }
 
-    body {
-      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
-      min-height: 100vh;
-      background: linear-gradient(180deg, var(--bg-1), var(--bg-2));
-      color: var(--text);
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg-deep);
+      color: var(--text-main);
+      font-family: 'Quicksand', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    /* Canvas principal em tela cheia */
+    #worldCanvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      z-index: 1;
+    }
+
+    /* Camada de interface sobreposta */
+    .ui-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: clamp(12px, 2.5vw, 24px);
+    }
+
+    /* Barra superior */
+    .top-hud {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      pointer-events: auto;
+      opacity: 0;
+      transform: translateY(-10px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+
+    .top-hud.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .chapter-pill {
+      background: var(--glass-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--glass-border);
+      border-radius: 999px;
+      padding: 8px 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+    }
+
+    .chapter-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--gold);
+      box-shadow: 0 0 10px var(--gold);
+    }
+
+    .chapter-label {
+      font-size: clamp(0.78rem, 2vw, 0.9rem);
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      color: var(--gold-soft);
+    }
+
+    .audio-toggle {
+      background: var(--glass-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--glass-border);
+      color: var(--text-main);
+      border-radius: 999px;
+      padding: 8px 16px;
+      font-family: inherit;
+      font-size: clamp(0.78rem, 2vw, 0.88rem);
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+      transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+    }
+
+    .audio-toggle:hover {
+      transform: translateY(-1px);
+      border-color: var(--gold);
+      background: rgba(42, 30, 74, 0.85);
+    }
+
+    /* Tela Inicial */
+    .intro-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: radial-gradient(circle at 50% 40%, rgba(45, 27, 78, 0.45), rgba(14, 10, 28, 0.82));
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      transition: opacity 0.8s ease, visibility 0.8s ease;
+    }
+
+    .intro-overlay.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .storybook-card {
+      max-width: 520px;
+      width: 100%;
+      background: linear-gradient(165deg, rgba(34, 24, 62, 0.88), rgba(22, 15, 42, 0.94));
+      border: 1.5px solid rgba(246, 211, 101, 0.45);
+      border-radius: 28px;
+      padding: clamp(26px, 5vw, 42px) clamp(22px, 4vw, 36px);
+      text-align: center;
+      box-shadow:
+        0 24px 60px rgba(0, 0, 0, 0.6),
+        inset 0 0 32px rgba(246, 211, 101, 0.08);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .storybook-card::before {
+      content: "";
+      position: absolute;
+      inset: 10px;
+      border: 1px solid rgba(246, 211, 101, 0.18);
+      border-radius: 20px;
+      pointer-events: none;
+    }
+
+    .ornament {
+      color: var(--gold);
+      font-size: 1.2rem;
+      letter-spacing: 0.4em;
+      margin-bottom: 10px;
+      opacity: 0.9;
+    }
+
+    .main-title {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: clamp(2.1rem, 6vw, 3rem);
+      font-weight: 700;
+      background: linear-gradient(135deg, #fff8e7 10%, #f6d365 55%, #f9a8d4 95%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 12px;
+      line-height: 1.15;
+    }
+
+    .main-subtitle {
+      font-size: clamp(0.95rem, 2.5vw, 1.08rem);
+      color: var(--text-soft);
+      line-height: 1.65;
+      margin-bottom: 28px;
+      font-weight: 400;
+    }
+
+    .primary-btn {
+      background: linear-gradient(135deg, #f6d365 0%, #fda085 50%, #f472b6 100%);
+      color: #1e1333;
+      border: none;
+      border-radius: 999px;
+      padding: 14px 32px;
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      cursor: pointer;
+      box-shadow: 0 10px 28px rgba(244, 114, 182, 0.35), 0 0 20px rgba(246, 211, 101, 0.3);
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .primary-btn:hover {
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 14px 34px rgba(244, 114, 182, 0.5), 0 0 28px rgba(246, 211, 101, 0.45);
+    }
+
+    .primary-btn:active {
+      transform: scale(0.98);
+    }
+
+    /* Caixa de narrativa / mensagens poéticas */
+    .story-banner-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: clamp(6px, 2vh, 14px);
+      pointer-events: none;
+    }
+
+    .story-banner {
+      max-width: 620px;
+      width: 100%;
+      background: var(--glass-bg);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid var(--glass-border);
+      border-radius: 22px;
+      padding: 14px 22px;
+      text-align: center;
+      box-shadow: 0 12px 34px rgba(0, 0, 0, 0.42);
+      transition: transform 0.35s ease, opacity 0.35s ease;
+    }
+
+    .story-title-small {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: clamp(1rem, 2.6vw, 1.2rem);
+      color: var(--gold);
+      margin-bottom: 4px;
+    }
+
+    .story-text {
+      font-size: clamp(0.88rem, 2.3vw, 1rem);
+      line-height: 1.55;
+      color: var(--text-main);
+    }
+
+    .hint-pill {
+      font-size: 0.78rem;
+      color: var(--rose-light);
+      background: rgba(244, 114, 182, 0.16);
+      border: 1px solid rgba(244, 114, 182, 0.35);
+      padding: 5px 14px;
+      border-radius: 999px;
+      letter-spacing: 0.02em;
+    }
+
+    /* Capítulo 3: Tabuleiro de Constelações (Memória Encantada) */
+    .memory-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 15;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 16px;
-      overflow-x: hidden;
+      padding: 76px 16px 135px;
+      pointer-events: none;
+      opacity: 0;
+      transform: scale(0.96);
+      transition: opacity 0.5s ease, transform 0.5s ease;
     }
 
-    .container {
-      width: 100%;
-      max-width: 520px;
-      background: var(--card);
-      border: 1.5px solid var(--accent-light);
-      border-radius: 24px;
-      padding: 22px;
-      box-shadow: 0 14px 36px rgba(225, 29, 72, 0.14);
-      text-align: center;
-      position: relative;
+    .memory-overlay.active {
+      opacity: 1;
+      transform: scale(1);
+      pointer-events: auto;
     }
 
-    .top-bar {
+    .constellation-preview {
+      margin-bottom: 12px;
       display: flex;
       align-items: center;
-      justify-content: space-between;
       gap: 8px;
-      margin-bottom: 10px;
-    }
-
-    .stage-badge {
-      display: inline-block;
-      background: #ffe4e6;
-      color: var(--accent);
-      font-weight: 700;
-      font-size: 0.78rem;
-      padding: 5px 12px;
+      background: rgba(19, 14, 36, 0.65);
+      border: 1px solid rgba(246, 211, 101, 0.3);
+      padding: 6px 16px;
       border-radius: 999px;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
+      font-size: 0.84rem;
+      color: var(--gold-soft);
     }
 
-    .audio-btn {
-      background: #fff5f7;
-      color: var(--accent);
-      border: 1px solid var(--accent-light);
-      border-radius: 999px;
-      padding: 5px 12px;
-      font-size: 0.8rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s ease, transform 0.15s ease;
-    }
-
-    .audio-btn:hover {
-      background: #ffe4e6;
-      transform: translateY(-1px);
-    }
-
-    h1 {
-      font-size: 1.35rem;
-      margin-bottom: 6px;
-    }
-
-    .subtitle {
-      font-size: 0.92rem;
-      opacity: 0.85;
-      margin-bottom: 16px;
-      line-height: 1.4;
-    }
-
-    .message-box {
-      min-height: 54px;
-      background: #fff5f7;
-      border: 1px dashed var(--accent-light);
-      border-radius: 14px;
-      padding: 10px 14px;
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.94rem;
-      font-weight: 500;
-      color: var(--text);
-      transition: all 0.25s ease;
-    }
-
-    /* FASE 1: Arena de Corações */
-    .heart-arena {
-      position: relative;
-      width: 100%;
-      height: 260px;
-      background: linear-gradient(180deg, #fff9fb, #ffeef3);
-      border-radius: 18px;
-      border: 1px solid #fecdd3;
-      overflow: hidden;
-    }
-
-    .floating-heart {
-      position: absolute;
-      font-size: 2.1rem;
-      cursor: pointer;
-      transition: transform 0.15s ease;
-      animation: floatBob 2s infinite ease-in-out;
-    }
-
-    .floating-heart:hover {
-      transform: scale(1.2);
-    }
-
-    @keyframes floatBob {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-6px); }
-    }
-
-    /* FASE 2: Caminho com Nuvens */
-    .path-arena {
-      position: relative;
-      width: 100%;
-      height: 230px;
-      background: linear-gradient(180deg, #e0f2fe 0%, #f0f9ff 75%, #dcfce7 75%, #bbf7d0 100%);
-      border-radius: 18px;
-      border: 1px solid #bae6fd;
-      overflow: hidden;
-      padding: 16px;
-    }
-
-    .walker {
-      position: absolute;
-      bottom: 42px;
-      left: 16px;
-      font-size: 2.3rem;
-      transition: left 0.55s ease;
-      z-index: 3;
-    }
-
-    .goal-flag {
-      position: absolute;
-      bottom: 42px;
-      right: 16px;
-      font-size: 2.2rem;
-      z-index: 2;
-    }
-
-    .cloud-obstacle {
-      position: absolute;
-      bottom: 46px;
-      font-size: 2.4rem;
-      cursor: pointer;
-      z-index: 4;
-      transition: transform 0.2s ease, opacity 0.3s ease;
-      filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.12));
-    }
-
-    .cloud-obstacle:hover {
-      transform: scale(1.15);
-    }
-
-    .cloud-label {
-      display: block;
-      font-size: 0.68rem;
-      background: rgba(255, 255, 255, 0.9);
-      padding: 2px 6px;
-      border-radius: 8px;
-      color: #334155;
-      font-weight: 600;
-      margin-top: -4px;
-    }
-
-    /* FASE 3: Memória */
-    .memory-grid {
+    .cards-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
+      grid-template-columns: repeat(4, minmax(66px, 98px));
+      gap: clamp(8px, 2vw, 14px);
+      justify-content: center;
+      max-width: 460px;
+      width: 100%;
     }
 
-    .mem-card {
-      height: 92px;
-      background: linear-gradient(135deg, #fb7185, #e11d48);
-      border-radius: 14px;
+    @media (max-width: 400px) {
+      .cards-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 7px;
+      }
+    }
+
+    .tarot-card {
+      aspect-ratio: 3 / 4;
+      perspective: 900px;
+      cursor: pointer;
+    }
+
+    .tarot-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+      transform-style: preserve-3d;
+    }
+
+    .tarot-card.flipped .tarot-inner,
+    .tarot-card.matched .tarot-inner {
+      transform: rotateY(180deg);
+    }
+
+    .tarot-face {
+      position: absolute;
+      inset: 0;
+      border-radius: 16px;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 6px;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    .tarot-back {
+      background: linear-gradient(145deg, #2d1f54, #1a1235);
+      border: 1.5px solid rgba(246, 211, 101, 0.5);
+    }
+
+    .tarot-back::after {
+      content: "✦";
+      font-size: 1.5rem;
+      color: var(--gold);
+      text-shadow: 0 0 12px rgba(246, 211, 101, 0.75);
+    }
+
+    .tarot-front {
+      background: linear-gradient(160deg, #3b2459, #24163d);
+      border: 1.5px solid var(--rose);
+      transform: rotateY(180deg);
+      gap: 4px;
+    }
+
+    .tarot-card.matched .tarot-front {
+      border-color: var(--gold);
+      box-shadow: 0 0 20px rgba(246, 211, 101, 0.45);
+      background: linear-gradient(160deg, #4c2a63, #2b1a47);
+    }
+
+    .tarot-icon {
+      font-size: clamp(1.4rem, 4vw, 1.9rem);
+    }
+
+    .tarot-word {
+      font-size: clamp(0.65rem, 1.8vw, 0.78rem);
+      font-weight: 600;
+      color: var(--gold-soft);
+      text-align: center;
+    }
+
+    /* Cena Final: Carta Interativa */
+    .letter-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 25;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.9rem;
-      color: #fff;
-      cursor: pointer;
-      box-shadow: 0 6px 14px rgba(225, 29, 72, 0.18);
-      transition: transform 0.2s ease, background 0.2s ease;
-    }
-
-    .mem-card.revealed,
-    .mem-card.matched {
-      background: #fff1f2;
-      border: 2px solid var(--accent-light);
-      color: var(--text);
-      cursor: default;
-    }
-
-    .mem-card.matched {
-      background: #dcfce7;
-      border-color: #86efac;
-    }
-
-    /* Carta Final */
-    .final-letter {
-      text-align: left;
-      background: #fff9fa;
-      border: 1px solid #fecdd3;
-      border-radius: 16px;
       padding: 18px;
-      line-height: 1.65;
-      font-size: 0.96rem;
-      margin-bottom: 18px;
+      background: radial-gradient(circle at 50% 50%, rgba(28, 18, 52, 0.55), rgba(11, 8, 22, 0.86));
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.8s ease, visibility 0.8s ease;
     }
 
-    .final-letter p + p {
-      margin-top: 10px;
+    .letter-overlay.open {
+      opacity: 1;
+      visibility: visible;
     }
 
-    .btn {
-      background: var(--accent);
-      color: #fff;
-      border: none;
-      border-radius: 999px;
-      padding: 11px 24px;
-      font-size: 0.95rem;
-      font-weight: 600;
+    .envelope-prompt {
+      text-align: center;
       cursor: pointer;
-      margin-top: 14px;
-      transition: background 0.2s ease, transform 0.15s ease;
+      animation: floatGentle 3s ease-in-out infinite;
     }
 
-    .btn:hover {
-      background: #be123c;
-      transform: translateY(-1px);
+    @keyframes floatGentle {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
     }
 
-    .hidden {
+    .envelope-box {
+      width: 220px;
+      height: 145px;
+      margin: 0 auto 16px;
+      background: linear-gradient(145deg, #fff5eb, #fde2e4);
+      border-radius: 18px;
+      border: 2px solid var(--gold);
+      box-shadow: 0 18px 45px rgba(246, 211, 101, 0.35);
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .envelope-flap {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 78px;
+      background: linear-gradient(180deg, #f9d8c9, #f5c2b8);
+      clip-path: polygon(0 0, 100% 0, 50% 100%);
+      border-bottom: 1px solid rgba(212, 163, 115, 0.4);
+    }
+
+    .wax-seal {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #fb7185, #be123c);
+      border: 2px solid #fde68a;
+      color: #fff8e7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      z-index: 2;
+      box-shadow: 0 6px 16px rgba(190, 18, 60, 0.45);
+    }
+
+    .parchment-card {
+      max-width: 560px;
+      width: 100%;
+      max-height: 86vh;
+      overflow-y: auto;
+      background: linear-gradient(180deg, #fffaf3 0%, #fff1f5 100%);
+      color: #3b1f32;
+      border: 2px solid var(--gold);
+      border-radius: 26px;
+      padding: clamp(24px, 5vw, 38px);
+      box-shadow: 0 25px 65px rgba(0, 0, 0, 0.65), 0 0 36px rgba(246, 211, 101, 0.3);
+      text-align: left;
+      position: relative;
+      display: none;
+      animation: unfoldPaper 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+
+    .parchment-card.visible {
+      display: block;
+    }
+
+    @keyframes unfoldPaper {
+      from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .parchment-header {
+      text-align: center;
+      margin-bottom: 18px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid rgba(190, 24, 93, 0.18);
+    }
+
+    .parchment-header h2 {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: clamp(1.55rem, 4.5vw, 2.05rem);
+      color: #9d174d;
+      margin-bottom: 4px;
+    }
+
+    .parchment-header span {
+      font-size: 0.85rem;
+      color: #831843;
+      opacity: 0.8;
+    }
+
+    .parchment-body p {
+      font-size: clamp(0.95rem, 2.4vw, 1.05rem);
+      line-height: 1.75;
+      margin-bottom: 14px;
+      color: #3f2236;
+    }
+
+    .parchment-signature {
+      margin-top: 18px;
+      font-family: 'Playfair Display', Georgia, serif;
+      font-style: italic;
+      font-size: 1.15rem;
+      color: #9d174d;
+      text-align: right;
+    }
+
+    .parchment-actions {
+      margin-top: 22px;
+      text-align: center;
+    }
+
+    .hidden-el {
       display: none !important;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="top-bar">
-      <span class="stage-badge" id="stageBadge">Fase 1 de 3</span>
-      <button class="audio-btn" id="audioBtn" type="button">🎵 Música: Ligada</button>
+  <!-- Cenário Animado 60fps -->
+  <canvas id="worldCanvas"></canvas>
+
+  <!-- Interface Superior e Narrativa Inferior -->
+  <div class="ui-layer">
+    <div class="top-hud" id="topHud">
+      <div class="chapter-pill">
+        <span class="chapter-dot"></span>
+        <span class="chapter-label" id="chapterLabel">Capítulo 1 • O Jardim das Estrelas</span>
+      </div>
+      <button class="audio-toggle" id="audioBtn" type="button" aria-label="Alternar música">
+        <span id="audioIcon">🎵</span>
+        <span id="audioText">Som Ativo</span>
+      </button>
     </div>
 
-    <h1 id="stageTitle">Para Você, Raely</h1>
-    <p class="subtitle" id="stageSubtitle">Toque nos corações que aparecem para revelar cada mensagem.</p>
+    <div class="story-banner-wrap" id="storyWrap" style="opacity: 0;">
+      <div class="story-banner" id="storyBanner">
+        <div class="story-title-small" id="storyTitle">O Jardim das Estrelas de Carinho</div>
+        <div class="story-text" id="storyText">
+          Guie a Raely até cada estrela dourada para revelar lembretes do quanto ela é amada.
+        </div>
+      </div>
+      <div class="hint-pill" id="hintPill">Toque na tela ou use as setas para caminhar ✨</div>
+    </div>
+  </div>
 
-    <div class="message-box" id="messageBox">
-      Toque no primeiro coração para começar ✨
+  <!-- Tela Inicial -->
+  <div class="intro-overlay" id="introOverlay">
+    <div class="storybook-card">
+      <div class="ornament">✦ ✧ ✦</div>
+      <h1 class="main-title">Para Raely</h1>
+      <p class="main-subtitle">
+        Um pequeno mundo encantado feito especialmente para lembrar o quanto você é amada, admirada e que eu sempre estarei ao seu lado para ajudar no que precisar.
+      </p>
+      <button class="primary-btn" id="startBtn" type="button">Começar Nossa Jornada ✨</button>
+    </div>
+  </div>
+
+  <!-- Capítulo 3: Constelação das Nossas Lembranças -->
+  <div class="memory-overlay" id="memoryOverlay">
+    <div class="constellation-preview" id="constellationStatus">
+      Estrelas da Constelação: 0 / 4 acesas ✦
+    </div>
+    <div class="cards-grid" id="cardsGrid"></div>
+  </div>
+
+  <!-- Cena Final: Envelope e Carta Interativa -->
+  <div class="letter-overlay" id="letterOverlay">
+    <div class="envelope-prompt" id="envelopePrompt">
+      <div class="envelope-box">
+        <div class="envelope-flap"></div>
+        <div class="wax-seal">💖</div>
+      </div>
+      <div class="story-banner" style="pointer-events: auto;">
+        <div class="story-title-small">Uma Carta Sob as Estrelas</div>
+        <div class="story-text">Toque no envelope dourado para abrir sua mensagem, Raely ✨</div>
+      </div>
     </div>
 
-    <!-- FASE 1 -->
-    <div class="heart-arena" id="stage1Area"></div>
-
-    <!-- FASE 2 -->
-    <div class="path-arena hidden" id="stage2Area">
-      <div class="walker" id="walker">🚶‍♀️</div>
-      <div class="goal-flag">🏡💖</div>
-    </div>
-
-    <!-- FASE 3 -->
-    <div class="memory-grid hidden" id="stage3Area"></div>
-
-    <!-- FINAL -->
-    <div class="hidden" id="finalArea">
-      <div class="final-letter">
-        <p><strong>Raely, com todo o meu amor:</strong></p>
+    <div class="parchment-card" id="parchmentCard">
+      <div class="parchment-header">
+        <h2>Para Você, Raely</h2>
+        <span>Sob o céu estrelado, com todo o meu carinho</span>
+      </div>
+      <div class="parchment-body">
         <p>
-          Eu fiz esse pequeno jogo só para você lembrar, de um jeito leve, do quanto você é amada e especial para mim.
+          Raely, eu criei cada estrela, cada luz e cada passo desta pequena jornada para que você nunca se esqueça de uma verdade simples: <strong>você é profundamente amada</strong>.
         </p>
         <p>
-          Nos dias fáceis ou nos dias em que tudo parecer pesado demais, Raely, eu sempre vou estar aqui — para te ouvir, segurar a sua mão e te ajudar no que você precisar. Você nunca precisa enfrentar nada sozinha.
+          Nos dias leves em que tudo brilha e também nos dias em que as nuvens parecem pesadas demais, eu quero que você sinta a minha presença bem aí do seu lado. Você nunca precisa carregar o mundo sozinha.
+        </p>
+        <p>
+          Sempre que precisar de ajuda, de um ombro amigo, de alguém para ouvir suas ideias ou para segurar a sua mão diante de qualquer desafio, é só olhar para o lado: <strong>eu sempre estarei aqui por você</strong>.
         </p>
       </div>
-      <button class="btn" id="restartBtn">Jogar novamente</button>
+      <div class="parchment-signature">
+        Com todo o meu amor e apoio, hoje e sempre. ✨
+      </div>
+      <div class="parchment-actions">
+        <button class="primary-btn" id="replayBtn" type="button">Rever a Jornada 🌙</button>
+      </div>
     </div>
   </div>
 
   <script>
-    /* ---------------- MÚSICA SUAVE (WEB AUDIO API) ---------------- */
-    const audioBtn = document.getElementById("audioBtn");
-    let audioCtx = null;
-    let musicEnabled = true;
-    let musicInterval = null;
-    let noteStep = 0;
+    (() => {
+      /* =========================================================================
+         1. SISTEMA DE ÁUDIO AMBIENTE (WEB AUDIO API - CAIXA DE MÚSICA / PIANO SUAVE)
+         ========================================================================= */
+      class GentleSoundscape {
+        constructor() {
+          this.ctx = null;
+          this.enabled = true;
+          this.isPlaying = false;
+          this.timerId = null;
+          this.step = 0;
 
-    // Arpejo calmo em Fá maior / Ré menor / Si bemol / Dó (frequências em Hz)
-    const MELODY_NOTES = [
-      349.23, 440.00, 523.25, 659.25,
-      293.66, 349.23, 440.00, 523.25,
-      233.08, 293.66, 349.23, 440.00,
-      261.63, 329.63, 392.00, 523.25
-    ];
+          // Progressão harmoniosa em Fá Maior / Ré Menor / Si Bemol / Dó (notas em Hz)
+          this.chords = [
+            [174.61, 261.63, 349.23, 440.00, 523.25], // Fmaj7
+            [146.83, 220.00, 293.66, 349.23, 440.00], // Dm7
+            [116.54, 233.08, 293.66, 349.23, 523.25], // Bbmaj9
+            [130.81, 196.00, 261.63, 329.63, 392.00]  // C6
+          ];
+        }
 
-    function ensureAudioContext() {
-      if (!audioCtx) {
-        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-        if (AudioContextClass) {
-          audioCtx = new AudioContextClass();
+        init() {
+          if (!this.ctx) {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (AudioCtx) this.ctx = new AudioCtx();
+          }
+          if (this.ctx && this.ctx.state === "suspended") {
+            this.ctx.resume().catch(() => {});
+          }
+        }
+
+        playBellNote(freq, duration = 2.2, gainVal = 0.032, delay = 0) {
+          if (!this.enabled || !this.ctx) return;
+          const now = this.ctx.currentTime + delay;
+
+          const oscMain = this.ctx.createOscillator();
+          const oscHarm = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+
+          oscMain.type = "sine";
+          oscHarm.type = "triangle";
+
+          oscMain.frequency.setValueAtTime(freq, now);
+          oscHarm.frequency.setValueAtTime(freq * 2, now);
+
+          const harmGain = this.ctx.createGain();
+          harmGain.gain.setValueAtTime(0.16, now);
+
+          gain.gain.setValueAtTime(0.0001, now);
+          gain.gain.exponentialRampToValueAtTime(gainVal, now + 0.06);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+          oscMain.connect(gain);
+          oscHarm.connect(harmGain);
+          harmGain.connect(gain);
+          gain.connect(this.ctx.destination);
+
+          oscMain.start(now);
+          oscHarm.start(now);
+          oscMain.stop(now + duration + 0.05);
+          oscHarm.stop(now + duration + 0.05);
+        }
+
+        startMusic() {
+          this.init();
+          if (this.isPlaying || !this.enabled) return;
+          this.isPlaying = true;
+
+          const tick = () => {
+            if (!this.isPlaying || !this.enabled) return;
+            const chordIndex = Math.floor(this.step / 4) % this.chords.length;
+            const noteIndex = this.step % 5;
+            const chord = this.chords[chordIndex];
+
+            // Nota grave suave no início de cada compasso
+            if (this.step % 4 === 0) {
+              this.playBellNote(chord[0], 3.4, 0.026, 0);
+            }
+            // Arpejo cristalino de caixa de música
+            const melodyFreq = chord[1 + (noteIndex % (chord.length - 1))];
+            this.playBellNote(melodyFreq, 2.0, 0.024, 0.04);
+
+            this.step++;
+            this.timerId = setTimeout(tick, 680);
+          };
+
+          tick();
+        }
+
+        stopMusic() {
+          this.isPlaying = false;
+          if (this.timerId) {
+            clearTimeout(this.timerId);
+            this.timerId = null;
+          }
+        }
+
+        toggle() {
+          this.enabled = !this.enabled;
+          if (this.enabled) {
+            this.startMusic();
+            this.playSparkle();
+          } else {
+            this.stopMusic();
+          }
+          return this.enabled;
+        }
+
+        playSparkle() {
+          this.init();
+          if (!this.enabled) return;
+          const notes = [587.33, 783.99, 1046.50, 1318.51];
+          notes.forEach((f, idx) => {
+            this.playBellNote(f, 0.9, 0.035, idx * 0.07);
+          });
+        }
+
+        playWarmResolve() {
+          this.init();
+          if (!this.enabled) return;
+          const notes = [349.23, 440.00, 523.25, 659.25, 880.00];
+          notes.forEach((f, idx) => {
+            this.playBellNote(f, 1.5, 0.036, idx * 0.08);
+          });
         }
       }
-      if (audioCtx && audioCtx.state === "suspended") {
-        audioCtx.resume().catch(() => {});
-      }
-    }
 
-    function playSoftTone(freq, duration = 1.1, volume = 0.035, type = "sine") {
-      if (!musicEnabled || !audioCtx) return;
+      const sound = new GentleSoundscape();
 
-      const now = audioCtx.currentTime;
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
+      /* =========================================================================
+         2. REFERÊNCIAS DOM & CONTROLES DE INTERFACE
+         ========================================================================= */
+      const canvas = document.getElementById("worldCanvas");
+      const ctx = canvas.getContext("2d");
 
-      osc.type = type;
-      osc.frequency.setValueAtTime(freq, now);
+      const topHud = document.getElementById("topHud");
+      const chapterLabel = document.getElementById("chapterLabel");
+      const audioBtn = document.getElementById("audioBtn");
+      const audioIcon = document.getElementById("audioIcon");
+      const audioText = document.getElementById("audioText");
 
-      gain.gain.setValueAtTime(0.0001, now);
-      gain.gain.exponentialRampToValueAtTime(volume, now + 0.08);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+      const storyWrap = document.getElementById("storyWrap");
+      const storyTitle = document.getElementById("storyTitle");
+      const storyText = document.getElementById("storyText");
+      const hintPill = document.getElementById("hintPill");
 
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
+      const introOverlay = document.getElementById("introOverlay");
+      const startBtn = document.getElementById("startBtn");
 
-      osc.start(now);
-      osc.stop(now + duration + 0.05);
-    }
+      const memoryOverlay = document.getElementById("memoryOverlay");
+      const constellationStatus = document.getElementById("constellationStatus");
+      const cardsGrid = document.getElementById("cardsGrid");
 
-    function playChimeEffect() {
-      ensureAudioContext();
-      playSoftTone(587.33, 0.35, 0.04, "triangle");
-      setTimeout(() => playSoftTone(880.00, 0.45, 0.03, "sine"), 90);
-    }
+      const letterOverlay = document.getElementById("letterOverlay");
+      const envelopePrompt = document.getElementById("envelopePrompt");
+      const parchmentCard = document.getElementById("parchmentCard");
+      const replayBtn = document.getElementById("replayBtn");
 
-    function startBackgroundMusic() {
-      stopBackgroundMusic();
-      if (!musicEnabled) return;
-
-      musicInterval = setInterval(() => {
-        if (!musicEnabled || !audioCtx || audioCtx.state !== "running") return;
-        const freq = MELODY_NOTES[noteStep % MELODY_NOTES.length];
-        playSoftTone(freq, 1.35, 0.028, "sine");
-        noteStep++;
-      }, 620);
-    }
-
-    function stopBackgroundMusic() {
-      if (musicInterval) {
-        clearInterval(musicInterval);
-        musicInterval = null;
-      }
-    }
-
-    function updateAudioButton() {
-      audioBtn.textContent = musicEnabled ? "🎵 Música: Ligada" : "🔇 Música: Desligada";
-    }
-
-    audioBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      musicEnabled = !musicEnabled;
-      updateAudioButton();
-
-      if (musicEnabled) {
-        ensureAudioContext();
-        startBackgroundMusic();
-        playChimeEffect();
-      } else {
-        stopBackgroundMusic();
-      }
-    });
-
-    // Inicia o contexto de áudio no primeiro clique/toque na página
-    document.addEventListener("pointerdown", () => {
-      if (!musicEnabled) return;
-      ensureAudioContext();
-      if (!musicInterval) {
-        startBackgroundMusic();
-      }
-    }, { once: true });
-
-    updateAudioButton();
-
-    /* ---------------- JOGO ---------------- */
-    const stageBadge = document.getElementById("stageBadge");
-    const stageTitle = document.getElementById("stageTitle");
-    const stageSubtitle = document.getElementById("stageSubtitle");
-    const messageBox = document.getElementById("messageBox");
-
-    const stage1Area = document.getElementById("stage1Area");
-    const stage2Area = document.getElementById("stage2Area");
-    const stage3Area = document.getElementById("stage3Area");
-    const finalArea = document.getElementById("finalArea");
-    const restartBtn = document.getElementById("restartBtn");
-
-    /* ---------------- FASE 1 ---------------- */
-    const HEART_MESSAGES = [
-      "Raely, você é muito amada, exatamente do jeitinho que você é.",
-      "Sempre que precisar de ajuda, pode me chamar sem pensar duas vezes.",
-      "Seu sorriso muda o meu dia inteiro para melhor.",
-      "Eu tenho muito orgulho de você e de tudo o que você faz.",
-      "Conte comigo hoje, amanhã e em qualquer momento, Raely."
-    ];
-    let heartsCollected = 0;
-
-    function startStage1() {
-      stageBadge.textContent = "Fase 1 de 3";
-      stageTitle.textContent = "Para Você, Raely";
-      stageSubtitle.textContent = "Toque nos 5 corações para revelar o que eu sinto por você.";
-      messageBox.textContent = "Toque nos corações dentro do quadro ✨";
-
-      stage1Area.classList.remove("hidden");
-      stage2Area.classList.add("hidden");
-      stage3Area.classList.add("hidden");
-      finalArea.classList.add("hidden");
-
-      heartsCollected = 0;
-      stage1Area.innerHTML = "";
-      spawnHeart();
-      spawnHeart();
-    }
-
-    function spawnHeart() {
-      if (heartsCollected >= HEART_MESSAGES.length) return;
-      const icons = ["💖", "💗", "💕", "✨", "🌸"];
-      const el = document.createElement("div");
-      el.className = "floating-heart";
-      el.textContent = icons[Math.floor(Math.random() * icons.length)];
-
-      const maxX = stage1Area.clientWidth - 48;
-      const maxY = stage1Area.clientHeight - 48;
-      el.style.left = `${14 + Math.random() * Math.max(maxX - 28, 60)}px`;
-      el.style.top = `${14 + Math.random() * Math.max(maxY - 28, 60)}px`;
-
-      el.addEventListener("click", () => {
-        if (heartsCollected >= HEART_MESSAGES.length) return;
-        playChimeEffect();
-        messageBox.textContent = HEART_MESSAGES[heartsCollected];
-        heartsCollected++;
-        el.remove();
-
-        if (heartsCollected >= HEART_MESSAGES.length) {
-          setTimeout(startStage2, 1400);
-        } else {
-          spawnHeart();
-        }
+      audioBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const active = sound.toggle();
+        audioIcon.textContent = active ? "🎵" : "🔇";
+        audioText.textContent = active ? "Som Ativo" : "Sem Som";
       });
 
-      stage1Area.appendChild(el);
-    }
+      /* =========================================================================
+         3. ESTADO DO JOGO E DADOS NARRATIVOS
+         ========================================================================= */
+      const STATE = {
+        INTRO: 0,
+        CH1_GARDEN: 1,
+        CH2_CLOUDS: 2,
+        CH3_CONSTELLATION: 3,
+        FINALE: 4
+      };
 
-    /* ---------------- FASE 2 ---------------- */
-    const CLOUDS_DATA = [
-      { label: "Cansaço", msg: "Quando o dia cansar, Raely, eu tô aqui para te acolher e te ajudar." },
-      { label: "Preocupação", msg: "Não precisa carregar tudo sozinha — a gente resolve juntos." },
-      { label: "Dúvidas", msg: "Qualquer problema ou escolha difícil, eu fico do seu lado." }
-    ];
-    let cloudsCleared = 0;
+      let currentState = STATE.INTRO;
+      let width = 0;
+      let height = 0;
+      let dpr = 1;
+      let time = 0;
 
-    function startStage2() {
-      stageBadge.textContent = "Fase 2 de 3";
-      stageTitle.textContent = "Atravessando Juntos";
-      stageSubtitle.textContent = "Toque nas nuvens no caminho para eu te ajudar a dissipar cada uma.";
-      messageBox.textContent = "Toque na primeira nuvem para abrir caminho ☀️";
+      // Personagem Raely
+      const raely = {
+        x: 120,
+        targetX: 120,
+        y: 0,
+        facing: 1,
+        walkCycle: 0,
+        isMoving: false,
+        auraGlow: 0
+      };
 
-      stage1Area.classList.add("hidden");
-      stage2Area.classList.remove("hidden");
+      // Companheiro luminoso (Borboleta/Espírito de luz dourada representando o autor)
+      const guide = {
+        x: 90,
+        y: 0,
+        targetX: 90,
+        targetY: 0,
+        assistBeam: 0,
+        beamTargetX: 0,
+        beamTargetY: 0
+      };
 
-      cloudsCleared = 0;
-      const walker = document.getElementById("walker");
-      walker.style.left = "16px";
+      // Teclado
+      const keys = { left: false, right: false };
 
-      stage2Area.querySelectorAll(".cloud-obstacle").forEach((c) => c.remove());
+      // Partículas ambientes (estrelas de fundo, vaga-lumes, pétalas e explosões)
+      let bgStars = [];
+      let fireflies = [];
+      let burstParticles = [];
+      let shootingStars = [];
 
-      const positions = ["24%", "47%", "69%"];
-      CLOUDS_DATA.forEach((item, index) => {
-        const cloud = document.createElement("div");
-        cloud.className = "cloud-obstacle";
-        cloud.style.left = positions[index];
-        cloud.innerHTML = `☁️<span class="cloud-label">${item.label}</span>`;
+      // Capítulo 1: Estrelas de Carinho no Jardim
+      const CH1_STARS_DATA = [
+        {
+          ratioX: 0.30,
+          offsetY: -55,
+          msg: "Raely, você é muito amada — mais do que qualquer palavra conseguiria explicar."
+        },
+        {
+          ratioX: 0.50,
+          offsetY: -85,
+          msg: "Seu sorriso ilumina tudo ao redor e torna qualquer dia mais bonito."
+        },
+        {
+          ratioX: 0.70,
+          offsetY: -50,
+          msg: "Eu admiro cada detalhe seu, sua força, sua doçura e quem você é."
+        },
+        {
+          ratioX: 0.87,
+          offsetY: -78,
+          msg: "Sempre que precisar, lembre-se: meu carinho acompanha cada passo seu."
+        }
+      ];
+      let ch1Stars = [];
 
-        cloud.addEventListener("click", () => {
-          if (index !== cloudsCleared) {
-            messageBox.textContent = "Vamos uma nuvem de cada vez, estou bem aqui com você 💛";
-            return;
-          }
-          playChimeEffect();
-          messageBox.textContent = item.msg;
-          cloud.style.opacity = "0";
-          setTimeout(() => cloud.remove(), 250);
-          cloudsCleared++;
+      // Capítulo 2: Nuvens de Preocupação na Ponte
+      const CH2_CLOUDS_DATA = [
+        {
+          ratioX: 0.36,
+          label: "Cansaço",
+          promise: "Quando o dia pesar, eu seguro a sua mão e descanso com você."
+        },
+        {
+          ratioX: 0.58,
+          label: "Preocupação",
+          promise: "Você nunca precisa enfrentar nada sozinha — estou bem aqui."
+        },
+        {
+          ratioX: 0.79,
+          label: "Dias Difíceis",
+          promise: "Qualquer desafio, a gente resolve juntos, passo a passo."
+        }
+      ];
+      let ch2Clouds = [];
 
-          const stepPositions = ["34%", "56%", "78%"];
-          walker.style.left = stepPositions[index];
+      // Capítulo 3: Cartas da Constelação
+      const CH3_PAIRS = [
+        {
+          id: "ternura",
+          icon: "🌸",
+          word: "Ternura",
+          msg: "Sua ternura transforma momentos simples em lembranças inesquecíveis."
+        },
+        {
+          id: "parceria",
+          icon: "🤝",
+          word: "Parceria",
+          msg: "Em qualquer plano ou dificuldade, você sempre terá a minha ajuda."
+        },
+        {
+          id: "luz",
+          icon: "✨",
+          word: "Sua Luz",
+          msg: "Você tem um brilho único que inspira e encanta todos os meus dias."
+        },
+        {
+          id: "abrigo",
+          icon: "🏡",
+          word: "Abrigo",
+          msg: "Meu abraço e meu apoio serão sempre o seu lugar seguro, Raely."
+        }
+      ];
+      let flippedCards = [];
+      let matchedPairsCount = 0;
+      let boardLocked = false;
 
-          if (cloudsCleared === CLOUDS_DATA.length) {
-            setTimeout(startStage3, 1600);
-          }
+      // Pontos de um coração constelado no céu do Capítulo 3
+      const HEART_CONSTELLATION_POINTS = [
+        { x: 0.50, y: 0.24 },
+        { x: 0.43, y: 0.18 },
+        { x: 0.37, y: 0.23 },
+        { x: 0.42, y: 0.31 },
+        { x: 0.50, y: 0.38 },
+        { x: 0.58, y: 0.31 },
+        { x: 0.63, y: 0.23 },
+        { x: 0.57, y: 0.18 }
+      ];
+
+      /* =========================================================================
+         4. REDIMENSIONAMENTO E INICIALIZAÇÃO DE ELEMENTOS VISUAIS
+         ========================================================================= */
+      function resizeCanvas() {
+        dpr = Math.min(window.devicePixelRatio || 1, 2);
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = Math.floor(width * dpr);
+        canvas.height = Math.floor(height * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        const groundY = getGroundY();
+        raely.y = groundY;
+        raely.x = Math.min(Math.max(raely.x, 45), width - 45);
+        raely.targetX = Math.min(Math.max(raely.targetX, 45), width - 45);
+
+        // Reposiciona itens ativos proporcionalmente
+        ch1Stars.forEach((s) => {
+          s.x = width * s.ratioX;
+          s.baseY = groundY + s.offsetY;
         });
 
-        stage2Area.appendChild(cloud);
-      });
-    }
+        ch2Clouds.forEach((c) => {
+          c.x = width * c.ratioX;
+          c.y = groundY - 58;
+        });
+      }
 
-    /* ---------------- FASE 3 ---------------- */
-    const PAIRS = [
-      { icon: "🤝", msg: "Parceria: Raely, você sempre pode contar com a minha ajuda." },
-      { icon: "❤️", msg: "Amor: meu carinho por você só cresce a cada dia." },
-      { icon: "🌟", msg: "Apoio: eu acredito em você e torço por cada passo seu." }
-    ];
-    let flipped = [];
-    let matchedCount = 0;
-    let lockBoard = false;
+      function getGroundY() {
+        return Math.min(height * 0.76, height - 155);
+      }
 
-    function startStage3() {
-      stageBadge.textContent = "Fase 3 de 3";
-      stageTitle.textContent = "Memória do Nosso Cuidado";
-      stageSubtitle.textContent = "Encontre os 3 pares para desbloquear a mensagem final.";
-      messageBox.textContent = "Vire duas cartas para encontrar os pares 💌";
+      function initAmbientParticles() {
+        bgStars = [];
+        for (let i = 0; i < 85; i++) {
+          bgStars.push({
+            x: Math.random() * width,
+            y: Math.random() * (height * 0.68),
+            r: 0.6 + Math.random() * 1.8,
+            phase: Math.random() * Math.PI * 2,
+            speed: 0.8 + Math.random() * 1.8
+          });
+        }
 
-      stage2Area.classList.add("hidden");
-      stage3Area.classList.remove("hidden");
+        fireflies = [];
+        for (let i = 0; i < 26; i++) {
+          fireflies.push({
+            x: Math.random() * width,
+            y: height * 0.35 + Math.random() * (height * 0.45),
+            vx: (Math.random() - 0.5) * 0.45,
+            vy: (Math.random() - 0.5) * 0.35,
+            r: 1.8 + Math.random() * 2.2,
+            phase: Math.random() * Math.PI * 2
+          });
+        }
+      }
 
-      flipped = [];
-      matchedCount = 0;
-      lockBoard = false;
-      stage3Area.innerHTML = "";
+      function spawnBurst(x, y, color = "#f6d365", count = 24) {
+        for (let i = 0; i < count; i++) {
+          const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.4;
+          const speed = 1.2 + Math.random() * 3.4;
+          burstParticles.push({
+            x,
+            y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed - 0.8,
+            life: 1,
+            decay: 0.015 + Math.random() * 0.015,
+            size: 2 + Math.random() * 3.5,
+            color: i % 2 === 0 ? color : "#f9a8d4"
+          });
+        }
+      }
 
-      const deck = [...PAIRS, ...PAIRS].sort(() => Math.random() - 0.5);
+      function spawnShootingStar() {
+        shootingStars.push({
+          x: Math.random() * width * 0.8,
+          y: Math.random() * height * 0.3,
+          vx: 7 + Math.random() * 5,
+          vy: 3.2 + Math.random() * 2.5,
+          len: 70 + Math.random() * 60,
+          life: 1
+        });
+      }
 
-      deck.forEach((item) => {
-        const card = document.createElement("div");
-        card.className = "mem-card";
-        card.textContent = "?";
+      /* =========================================================================
+         5. TRANSIÇÕES DE CAPÍTULOS
+         ========================================================================= */
+      function setStoryBanner(title, text, hint) {
+        storyTitle.textContent = title;
+        storyText.textContent = text;
+        hintPill.textContent = hint;
+      }
 
-        card.addEventListener("click", () => {
-          if (lockBoard || card.classList.contains("revealed") || card.classList.contains("matched")) {
-            return;
-          }
+      function startChapter1() {
+        currentState = STATE.CH1_GARDEN;
+        topHud.classList.add("visible");
+        storyWrap.style.opacity = "1";
+        memoryOverlay.classList.remove("active");
+        letterOverlay.classList.remove("open");
 
-          ensureAudioContext();
-          playSoftTone(523.25, 0.2, 0.025, "sine");
-          card.classList.add("revealed");
-          card.textContent = item.icon;
-          flipped.push({ card, item });
+        chapterLabel.textContent = "Capítulo 1 • O Jardim das Estrelas";
+        setStoryBanner(
+          "O Jardim das Estrelas de Carinho",
+          "Toque nas estrelas douradas ou caminhe pelo jardim para descobrir o quanto você é amada, Raely.",
+          "Toque na tela ou nas estrelas para caminhar ✨"
+        );
 
-          if (flipped.length === 2) {
-            lockBoard = true;
-            const [first, second] = flipped;
+        const groundY = getGroundY();
+        raely.x = Math.max(55, width * 0.12);
+        raely.targetX = raely.x;
+        raely.y = groundY;
+        raely.facing = 1;
 
-            if (first.item.icon === second.item.icon) {
-              playChimeEffect();
+        guide.x = raely.x - 28;
+        guide.y = groundY - 68;
+
+        ch1Stars = CH1_STARS_DATA.map((item, idx) => ({
+          ...item,
+          index: idx,
+          x: width * item.ratioX,
+          baseY: groundY + item.offsetY,
+          collected: false,
+          scale: 1
+        }));
+      }
+
+      function startChapter2() {
+        currentState = STATE.CH2_CLOUDS;
+        chapterLabel.textContent = "Capítulo 2 • Atravessando Juntos";
+        setStoryBanner(
+          "A Ponte Sob o Crepúsculo",
+          "Nuvens de cansaço e preocupação surgiram no caminho. Toque em cada nuvem para eu dissipá-la com você.",
+          "Toque na nuvem à frente da Raely para iluminar o caminho 💛"
+        );
+
+        const groundY = getGroundY();
+        raely.x = Math.max(55, width * 0.13);
+        raely.targetX = raely.x;
+        raely.y = groundY;
+        raely.facing = 1;
+
+        ch2Clouds = CH2_CLOUDS_DATA.map((item, idx) => ({
+          ...item,
+          index: idx,
+          x: width * item.ratioX,
+          y: groundY - 58,
+          cleared: false,
+          bloomProgress: 0
+        }));
+      }
+
+      function startChapter3() {
+        currentState = STATE.CH3_CONSTELLATION;
+        chapterLabel.textContent = "Capítulo 3 • Constelação das Lembranças";
+        setStoryBanner(
+          "Constelação do Nosso Carinho",
+          "Vire as cartas encantadas e conecte os pares para acender um coração no céu estrelado.",
+          "Toque em duas cartas para revelar o par ✨"
+        );
+
+        raely.targetX = width * 0.5;
+        matchedPairsCount = 0;
+        flippedCards = [];
+        boardLocked = false;
+        constellationStatus.textContent = "Estrelas da Constelação: 0 / 4 acesas ✦";
+
+        buildMemoryDeck();
+        memoryOverlay.classList.add("active");
+      }
+
+      function buildMemoryDeck() {
+        cardsGrid.innerHTML = "";
+        const deck = [...CH3_PAIRS, ...CH3_PAIRS]
+          .map((item) => ({ item, sort: Math.random() }))
+          .sort((a, b) => a.sort - b.sort)
+          .map((obj) => obj.item);
+
+        deck.forEach((pair) => {
+          const card = document.createElement("div");
+          card.className = "tarot-card";
+          card.innerHTML = `
+            <div class="tarot-inner">
+              <div class="tarot-face tarot-back"></div>
+              <div class="tarot-face tarot-front">
+                <span class="tarot-icon">${pair.icon}</span>
+                <span class="tarot-word">${pair.word}</span>
+              </div>
+            </div>
+          `;
+
+          card.addEventListener("click", () => handleCardFlip(card, pair));
+          cardsGrid.appendChild(card);
+        });
+      }
+
+      function handleCardFlip(card, pair) {
+        if (
+          boardLocked ||
+          card.classList.contains("flipped") ||
+          card.classList.contains("matched")
+        ) {
+          return;
+        }
+
+        sound.playBellNote(659.25, 0.5, 0.025, 0);
+        card.classList.add("flipped");
+        flippedCards.push({ card, pair });
+
+        if (flippedCards.length === 2) {
+          boardLocked = true;
+          const [first, second] = flippedCards;
+
+          if (first.pair.id === second.pair.id) {
+            setTimeout(() => {
               first.card.classList.add("matched");
               second.card.classList.add("matched");
-              messageBox.textContent = first.item.msg;
-              matchedCount++;
-              flipped = [];
-              lockBoard = false;
+              matchedPairsCount++;
+              sound.playSparkle();
+              raely.auraGlow = 1;
 
-              if (matchedCount === PAIRS.length) {
-                setTimeout(showFinal, 1300);
+              constellationStatus.textContent = `Estrelas da Constelação: ${matchedPairsCount} / 4 acesas ✦`;
+              setStoryBanner(pair.word, pair.msg, "Continue acendendo as estrelas no céu ✨");
+
+              const pt = HEART_CONSTELLATION_POINTS[(matchedPairsCount - 1) * 2];
+              if (pt) spawnBurst(width * pt.x, height * pt.y, "#f6d365", 28);
+
+              flippedCards = [];
+              boardLocked = false;
+
+              if (matchedPairsCount === CH3_PAIRS.length) {
+                setTimeout(startFinale, 1700);
               }
-            } else {
-              setTimeout(() => {
-                first.card.classList.remove("revealed");
-                second.card.classList.remove("revealed");
-                first.card.textContent = "?";
-                second.card.textContent = "?";
-                flipped = [];
-                lockBoard = false;
-              }, 700);
+            }, 380);
+          } else {
+            setTimeout(() => {
+              first.card.classList.remove("flipped");
+              second.card.classList.remove("flipped");
+              flippedCards = [];
+              boardLocked = false;
+            }, 780);
+          }
+        }
+      }
+
+      function startFinale() {
+        currentState = STATE.FINALE;
+        memoryOverlay.classList.remove("active");
+        chapterLabel.textContent = "Final • Sob o Céu Estrelado";
+        setStoryBanner(
+          "O Mirante das Estrelas",
+          "Chegamos ao final da trilha, Raely. Há uma carta esperando por você.",
+          "Toque no envelope para ler 💖"
+        );
+
+        sound.playWarmResolve();
+        for (let i = 0; i < 4; i++) {
+          setTimeout(spawnShootingStar, i * 450);
+        }
+
+        envelopePrompt.classList.remove("hidden-el");
+        parchmentCard.classList.remove("visible");
+        setTimeout(() => {
+          letterOverlay.classList.add("open");
+        }, 700);
+      }
+
+      /* =========================================================================
+         6. INTERAÇÃO DO JOGADOR (TOQUE, CLIQUE E TECLADO)
+         ========================================================================= */
+      function handleWorldPointer(clientX, clientY) {
+        if (currentState === STATE.INTRO || currentState === STATE.FINALE || currentState === STATE.CH3_CONSTELLATION) {
+          return;
+        }
+
+        sound.init();
+
+        if (currentState === STATE.CH1_GARDEN) {
+          // Verifica se tocou diretamente em alguma estrela
+          let clickedStar = null;
+          for (const star of ch1Stars) {
+            if (!star.collected && Math.hypot(clientX - star.x, clientY - star.baseY) < 48) {
+              clickedStar = star;
+              break;
             }
           }
-        });
+          raely.targetX = clickedStar ? clickedStar.x : Math.min(Math.max(clientX, 45), width - 45);
+        } else if (currentState === STATE.CH2_CLOUDS) {
+          const nextCloud = ch2Clouds.find((c) => !c.cleared);
+          if (!nextCloud) return;
 
-        stage3Area.appendChild(card);
+          // Verifica se tocou na próxima nuvem escura
+          const distToCloud = Math.hypot(clientX - nextCloud.x, clientY - nextCloud.y);
+          if (distToCloud < 65) {
+            clearCloud(nextCloud);
+          } else {
+            // Caminha até perto da nuvem sem ultrapassá-la
+            const safeMaxX = nextCloud.x - 58;
+            raely.targetX = Math.min(Math.max(clientX, 45), safeMaxX);
+          }
+        }
+      }
+
+      function clearCloud(cloud) {
+        if (cloud.cleared) return;
+        cloud.cleared = true;
+        sound.playWarmResolve();
+        raely.auraGlow = 1;
+
+        // Raio de luz do companheiro envolvendo a Raely e a nuvem
+        guide.assistBeam = 1;
+        guide.beamTargetX = cloud.x;
+        guide.beamTargetY = cloud.y;
+
+        spawnBurst(cloud.x, cloud.y, "#f6d365", 34);
+        setStoryBanner("Sempre Ao Seu Lado", cloud.promise, "Seguindo juntos pela ponte ✨");
+
+        // Raely avança passando pela nuvem dissipada
+        raely.targetX = Math.min(cloud.x + 48, width - 55);
+
+        const allCleared = ch2Clouds.every((c) => c.cleared);
+        if (allCleared) {
+          setTimeout(startChapter3, 2100);
+        }
+      }
+
+      canvas.addEventListener("pointerdown", (e) => {
+        handleWorldPointer(e.clientX, e.clientY);
       });
-    }
 
-    function showFinal() {
-      playChimeEffect();
-      stageBadge.textContent = "Concluído 💖";
-      stageTitle.textContent = "Para Você, Raely";
-      stageSubtitle.textContent = "Lembre-se sempre disso:";
-      messageBox.classList.add("hidden");
-      stage3Area.classList.add("hidden");
-      finalArea.classList.remove("hidden");
-    }
+      window.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") keys.left = true;
+        if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") keys.right = true;
+        if (e.key === " " || e.key === "Enter") {
+          if (currentState === STATE.CH2_CLOUDS) {
+            const nextCloud = ch2Clouds.find((c) => !c.cleared);
+            if (nextCloud && Math.abs(raely.x - nextCloud.x) < 120) {
+              clearCloud(nextCloud);
+            }
+          }
+        }
+      });
 
-    restartBtn.addEventListener("click", () => {
-      playChimeEffect();
-      messageBox.classList.remove("hidden");
-      startStage1();
-    });
+      window.addEventListener("keyup", (e) => {
+        if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") keys.left = false;
+        if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") keys.right = false;
+      });
 
-    startStage1();
+      startBtn.addEventListener("click", () => {
+        sound.startMusic();
+        sound.playSparkle();
+        introOverlay.classList.add("hidden");
+        startChapter1();
+      });
+
+      envelopePrompt.addEventListener("click", () => {
+        sound.playWarmResolve();
+        spawnBurst(width * 0.5, height * 0.45, "#f6d365", 40);
+        envelopePrompt.classList.add("hidden-el");
+        parchmentCard.classList.add("visible");
+      });
+
+      replayBtn.addEventListener("click", () => {
+        sound.playSparkle();
+        letterOverlay.classList.remove("open");
+        startChapter1();
+      });
+
+      /* =========================================================================
+         7. ATUALIZAÇÃO DE FÍSICA SUAVE E LÓGICA DO MUNDO
+         ========================================================================= */
+      function update(dt) {
+        time += dt;
+
+        // Estrelas cadentes ocasionais
+        if (Math.random() < (currentState === STATE.FINALE ? 0.025 : 0.004)) {
+          spawnShootingStar();
+        }
+
+        // Movimento via teclado
+        if (currentState === STATE.CH1_GARDEN || currentState === STATE.CH2_CLOUDS) {
+          const keySpeed = 240 * dt;
+          if (keys.left) raely.targetX = Math.max(45, raely.targetX - keySpeed);
+          if (keys.right) {
+            let maxLimit = width - 45;
+            if (currentState === STATE.CH2_CLOUDS) {
+              const nextCloud = ch2Clouds.find((c) => !c.cleared);
+              if (nextCloud) maxLimit = nextCloud.x - 56;
+            }
+            raely.targetX = Math.min(maxLimit, raely.targetX + keySpeed);
+          }
+        }
+
+        // Interpolação suave da caminhada da Raely
+        const dx = raely.targetX - raely.x;
+        if (Math.abs(dx) > 1.5) {
+          const step = Math.sign(dx) * Math.min(Math.abs(dx), 210 * dt);
+          raely.x += step;
+          raely.facing = dx > 0 ? 1 : -1;
+          raely.isMoving = true;
+          raely.walkCycle += dt * 9.5;
+        } else {
+          raely.isMoving = false;
+          raely.walkCycle += dt * 2.2;
+        }
+
+        if (raely.auraGlow > 0) {
+          raely.auraGlow = Math.max(0, raely.auraGlow - dt * 0.9);
+        }
+
+        // Companheiro luminoso orbita suavemente ao lado da Raely
+        const desiredGuideX = raely.x - raely.facing * 34 + Math.sin(time * 2.3) * 10;
+        const desiredGuideY = raely.y - 78 + Math.cos(time * 3.1) * 8;
+        guide.x += (desiredGuideX - guide.x) * Math.min(1, dt * 4.5);
+        guide.y += (desiredGuideY - guide.y) * Math.min(1, dt * 4.5);
+
+        if (guide.assistBeam > 0) {
+          guide.assistBeam = Math.max(0, guide.assistBeam - dt * 1.1);
+        }
+
+        // Coleta de estrelas no Capítulo 1
+        if (currentState === STATE.CH1_GARDEN) {
+          let collectedCount = 0;
+          for (const star of ch1Stars) {
+            if (star.collected) {
+              collectedCount++;
+              continue;
+            }
+            if (Math.abs(raely.x - star.x) < 34) {
+              star.collected = true;
+              collectedCount++;
+              sound.playSparkle();
+              raely.auraGlow = 1;
+              spawnBurst(star.x, star.baseY, "#f6d365", 26);
+              setStoryBanner(
+                `Estrela ${collectedCount} de ${ch1Stars.length}`,
+                star.msg,
+                collectedCount < ch1Stars.length
+                  ? "Continue caminhando até a próxima estrela ✨"
+                  : "Todas as estrelas do jardim foram acesas! 💖"
+              );
+
+              if (collectedCount === ch1Stars.length) {
+                setTimeout(startChapter2, 2200);
+              }
+            }
+          }
+        }
+
+        // Animação de florescimento das nuvens dissipadas no Capítulo 2
+        if (currentState === STATE.CH2_CLOUDS) {
+          for (const cloud of ch2Clouds) {
+            if (cloud.cleared && cloud.bloomProgress < 1) {
+              cloud.bloomProgress = Math.min(1, cloud.bloomProgress + dt * 1.8);
+            }
+          }
+        }
+
+        // Atualiza vaga-lumes
+        for (const f of fireflies) {
+          f.x += f.vx + Math.sin(time + f.phase) * 0.18;
+          f.y += f.vy + Math.cos(time * 0.9 + f.phase) * 0.15;
+          if (f.x < -10) f.x = width + 10;
+          if (f.x > width + 10) f.x = -10;
+          if (f.y < height * 0.25) f.y = height * 0.8;
+          if (f.y > height * 0.85) f.y = height * 0.3;
+        }
+
+        // Atualiza partículas de explosão
+        for (let i = burstParticles.length - 1; i >= 0; i--) {
+          const p = burstParticles[i];
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vy += 0.04;
+          p.life -= p.decay;
+          if (p.life <= 0) burstParticles.splice(i, 1);
+        }
+
+        // Atualiza estrelas cadentes
+        for (let i = shootingStars.length - 1; i >= 0; i--) {
+          const s = shootingStars[i];
+          s.x += s.vx;
+          s.y += s.vy;
+          s.life -= 0.018;
+          if (s.life <= 0) shootingStars.splice(i, 1);
+        }
+      }
+
+      /* =========================================================================
+         8. RENDERIZAÇÃO ARTÍSTICA (LIVRO DE HISTÓRIAS / CREPÚSCULO ESTELAR)
+         ========================================================================= */
+      function drawSkyAndBackdrop() {
+        // Gradiente crepuscular profundo
+        const skyGrad = ctx.createLinearGradient(0, 0, 0, height);
+        skyGrad.addColorStop(0, "#100b22");
+        skyGrad.addColorStop(0.45, "#241744");
+        skyGrad.addColorStop(0.78, "#4c244b");
+        skyGrad.addColorStop(1, "#1c122e");
+        ctx.fillStyle = skyGrad;
+        ctx.fillRect(0, 0, width, height);
+
+        // Lua crescente dourada suave
+        const moonX = width * 0.82;
+        const moonY = height * 0.17;
+        const moonGlow = ctx.createRadialGradient(moonX, moonY, 8, moonX, moonY, 95);
+        moonGlow.addColorStop(0, "rgba(254, 243, 199, 0.45)");
+        moonGlow.addColorStop(0.5, "rgba(246, 211, 101, 0.12)");
+        moonGlow.addColorStop(1, "rgba(246, 211, 101, 0)");
+        ctx.fillStyle = moonGlow;
+        ctx.beginPath();
+        ctx.arc(moonX, moonY, 95, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = "#fef3c7";
+        ctx.beginPath();
+        ctx.arc(moonX, moonY, 24, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = "#1c1336";
+        ctx.beginPath();
+        ctx.arc(moonX - 8, moonY - 5, 21, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Estrelas cintilantes de fundo
+        for (const st of bgStars) {
+          const alpha = 0.35 + 0.65 * (0.5 + 0.5 * Math.sin(time * st.speed + st.phase));
+          ctx.fillStyle = `rgba(255, 248, 231, ${alpha.toFixed(2)})`;
+          ctx.beginPath();
+          ctx.arc(st.x, st.y, st.r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Estrelas cadentes
+        for (const s of shootingStars) {
+          const grad = ctx.createLinearGradient(s.x, s.y, s.x - s.len, s.y - s.len * 0.45);
+          grad.addColorStop(0, `rgba(255, 250, 220, ${s.life})`);
+          grad.addColorStop(1, "rgba(255, 250, 220, 0)");
+          ctx.strokeStyle = grad;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(s.x, s.y);
+          ctx.lineTo(s.x - s.len, s.y - s.len * 0.45);
+          ctx.stroke();
+        }
+
+        // Constelação em forma de coração no Capítulo 3 e Final
+        if (currentState === STATE.CH3_CONSTELLATION || currentState === STATE.FINALE) {
+          drawHeartConstellation();
+        }
+
+        // Montanhas distantes com paralaxe sutil
+        const parallax = (raely.x - width * 0.5) * 0.03;
+        const groundY = getGroundY();
+
+        ctx.fillStyle = "rgba(26, 17, 48, 0.72)";
+        ctx.beginPath();
+        ctx.moveTo(0, groundY);
+        ctx.lineTo(0, groundY - 95);
+        ctx.quadraticCurveTo(width * 0.25 - parallax, groundY - 165, width * 0.5 - parallax, groundY - 85);
+        ctx.quadraticCurveTo(width * 0.78 - parallax, groundY - 155, width, groundY - 90);
+        ctx.lineTo(width, groundY);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      function drawHeartConstellation() {
+        const litCount = currentState === STATE.FINALE ? 4 : matchedPairsCount;
+        const totalNodes = HEART_CONSTELLATION_POINTS.length;
+        const activeNodes = Math.min(totalNodes, litCount * 2);
+
+        // Linhas conectando as estrelas acesas
+        if (activeNodes > 1) {
+          ctx.strokeStyle = "rgba(246, 211, 101, 0.45)";
+          ctx.lineWidth = 1.6;
+          ctx.beginPath();
+          for (let i = 0; i < activeNodes; i++) {
+            const pt = HEART_CONSTELLATION_POINTS[i];
+            const px = width * pt.x;
+            const py = height * pt.y;
+            if (i === 0) ctx.moveTo(px, py);
+            else ctx.lineTo(px, py);
+          }
+          if (activeNodes === totalNodes) ctx.closePath();
+          ctx.stroke();
+        }
+
+        // Estrelas da constelação
+        for (let i = 0; i < totalNodes; i++) {
+          const pt = HEART_CONSTELLATION_POINTS[i];
+          const px = width * pt.x;
+          const py = height * pt.y;
+          const isLit = i < activeNodes;
+
+          if (isLit) {
+            const glow = ctx.createRadialGradient(px, py, 1, px, py, 16);
+            glow.addColorStop(0, "rgba(255, 248, 220, 0.95)");
+            glow.addColorStop(0.5, "rgba(246, 211, 101, 0.45)");
+            glow.addColorStop(1, "rgba(246, 211, 101, 0)");
+            ctx.fillStyle = glow;
+            ctx.beginPath();
+            ctx.arc(px, py, 16, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          ctx.fillStyle = isLit ? "#fffbeb" : "rgba(255, 255, 255, 0.22)";
+          ctx.beginPath();
+          ctx.arc(px, py, isLit ? 3.5 : 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      function drawGroundAndScene() {
+        const groundY = getGroundY();
+
+        if (currentState === STATE.CH2_CLOUDS) {
+          // Ponte encantada suspensa entre nuvens
+          ctx.fillStyle = "#161029";
+          ctx.fillRect(0, groundY + 18, width, height - groundY);
+
+          // Pilares e arcos da ponte
+          ctx.strokeStyle = "rgba(246, 211, 101, 0.45)";
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(0, groundY);
+          ctx.lineTo(width, groundY);
+          ctx.stroke();
+
+          // Balaustrada iluminada
+          for (let x = 24; x < width; x += 48) {
+            ctx.fillStyle = "rgba(246, 211, 101, 0.25)";
+            ctx.fillRect(x - 2, groundY - 14, 4, 14);
+            ctx.fillStyle = "#fde68a";
+            ctx.beginPath();
+            ctx.arc(x, groundY - 16, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        } else {
+          // Solo do jardim encantado / mirante
+          const groundGrad = ctx.createLinearGradient(0, groundY, 0, height);
+          groundGrad.addColorStop(0, "#1f163b");
+          groundGrad.addColorStop(0.35, "#150e29");
+          groundGrad.addColorStop(1, "#0d081a");
+          ctx.fillStyle = groundGrad;
+          ctx.fillRect(0, groundY, width, height - groundY);
+
+          // Linha brilhante de grama/pétalas
+          ctx.strokeStyle = "rgba(244, 114, 182, 0.35)";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(0, groundY);
+          ctx.lineTo(width, groundY);
+          ctx.stroke();
+
+          // Pequenas flores luminosas espalhadas no jardim
+          for (let x = 30; x < width; x += 65) {
+            const sway = Math.sin(time * 2 + x) * 2.5;
+            ctx.strokeStyle = "rgba(167, 243, 208, 0.4)";
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(x, groundY);
+            ctx.lineTo(x + sway, groundY - 10);
+            ctx.stroke();
+
+            ctx.fillStyle = x % 130 === 30 ? "#f9a8d4" : "#fde68a";
+            ctx.beginPath();
+            ctx.arc(x + sway, groundY - 11, 2.8, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      }
+
+      function drawChapter1Stars() {
+        for (const star of ch1Stars) {
+          if (star.collected) continue;
+          const bobY = star.baseY + Math.sin(time * 3 + star.index) * 6;
+
+          // Halo dourado
+          const glow = ctx.createRadialGradient(star.x, bobY, 2, star.x, bobY, 34);
+          glow.addColorStop(0, "rgba(255, 250, 210, 0.95)");
+          glow.addColorStop(0.45, "rgba(246, 211, 101, 0.4)");
+          glow.addColorStop(1, "rgba(246, 211, 101, 0)");
+          ctx.fillStyle = glow;
+          ctx.beginPath();
+          ctx.arc(star.x, bobY, 34, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Estrela de 4 pontas brilhante
+          drawFourPointStar(star.x, bobY, 13, 5, "#fffbeb", "#f6d365");
+        }
+      }
+
+      function drawFourPointStar(cx, cy, outerR, innerR, fillInner, fillOuter) {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(Math.sin(time * 1.5) * 0.08);
+        ctx.beginPath();
+        for (let i = 0; i < 8; i++) {
+          const r = i % 2 === 0 ? outerR : innerR;
+          const angle = (Math.PI / 4) * i;
+          const x = Math.cos(angle) * r;
+          const y = Math.sin(angle) * r;
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.fillStyle = fillOuter;
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(0, 0, innerR * 0.75, 0, Math.PI * 2);
+        ctx.fillStyle = fillInner;
+        ctx.fill();
+        ctx.restore();
+      }
+
+      function drawChapter2Clouds() {
+        for (const cloud of ch2Clouds) {
+          const bob = Math.sin(time * 2.4 + cloud.index) * 4;
+          const cy = cloud.y + bob;
+
+          if (!cloud.cleared) {
+            // Nuvem escura de preocupação com contorno suave
+            ctx.save();
+            ctx.fillStyle = "rgba(44, 34, 72, 0.92)";
+            ctx.strokeStyle = "rgba(196, 181, 253, 0.45)";
+            ctx.lineWidth = 1.8;
+
+            drawCloudShape(cloud.x, cy, 1);
+            ctx.fill();
+            ctx.stroke();
+
+            // Rótulo delicado
+            ctx.fillStyle = "#e9d5ff";
+            ctx.font = "600 12px 'Quicksand', sans-serif";
+            ctx.textAlign = "center";
+            ctx.fillText(cloud.label, cloud.x, cy + 4);
+            ctx.restore();
+          } else {
+            // Transformada em luz dourada e flores
+            const glow = ctx.createRadialGradient(cloud.x, cy, 2, cloud.x, cy, 36);
+            glow.addColorStop(0, "rgba(253, 230, 138, 0.65)");
+            glow.addColorStop(1, "rgba(253, 230, 138, 0)");
+            ctx.fillStyle = glow;
+            ctx.beginPath();
+            ctx.arc(cloud.x, cy, 36, 0, Math.PI * 2);
+            ctx.fill();
+
+            drawFourPointStar(cloud.x, cy, 10, 4, "#fffbeb", "#f9a8d4");
+          }
+        }
+      }
+
+      function drawCloudShape(cx, cy, scale) {
+        ctx.beginPath();
+        ctx.arc(cx - 22 * scale, cy + 4 * scale, 18 * scale, Math.PI * 0.5, Math.PI * 1.5);
+        ctx.arc(cx - 6 * scale, cy - 10 * scale, 22 * scale, Math.PI, Math.PI * 2);
+        ctx.arc(cx + 18 * scale, cy - 6 * scale, 18 * scale, Math.PI * 1.1, Math.PI * 0.2);
+        ctx.arc(cx + 24 * scale, cy + 6 * scale, 15 * scale, Math.PI * 1.5, Math.PI * 0.5);
+        ctx.closePath();
+      }
+
+      /* =========================================================================
+         9. DESENHO DETALHADO DA PERSONAGEM FEMININA (RAELY) E COMPANHEIRO DE LUZ
+         ========================================================================= */
+      function drawRaely() {
+        const x = raely.x;
+        const y = raely.y;
+        const dir = raely.facing;
+        const bob = raely.isMoving
+          ? Math.abs(Math.sin(raely.walkCycle)) * -4.5
+          : Math.sin(raely.walkCycle) * -1.8;
+        const hairWave = Math.sin(time * 4.5 - dir * 0.5) * 4 + (raely.isMoving ? -dir * 7 : -dir * 2);
+        const dressSway = Math.sin(raely.walkCycle) * (raely.isMoving ? 4 : 1.5);
+
+        ctx.save();
+        ctx.translate(x, y + bob);
+
+        // Aura calorosa ao redor da Raely
+        const auraRadius = 52 + raely.auraGlow * 28;
+        const aura = ctx.createRadialGradient(0, -38, 4, 0, -38, auraRadius);
+        aura.addColorStop(0, `rgba(251, 207, 232, ${0.24 + raely.auraGlow * 0.35})`);
+        aura.addColorStop(0.6, "rgba(246, 211, 101, 0.1)");
+        aura.addColorStop(1, "rgba(246, 211, 101, 0)");
+        ctx.fillStyle = aura;
+        ctx.beginPath();
+        ctx.arc(0, -38, auraRadius, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Sombra suave no chão
+        ctx.fillStyle = "rgba(10, 6, 20, 0.45)";
+        ctx.beginPath();
+        ctx.ellipse(0, -bob, 16, 4.5, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Pernas delicadas animadas
+        const legSwing = raely.isMoving ? Math.sin(raely.walkCycle) * 5 : 0;
+        ctx.strokeStyle = "#f5d0c5";
+        ctx.lineWidth = 3.6;
+        ctx.lineCap = "round";
+
+        // Perna traseira
+        ctx.beginPath();
+        ctx.moveTo(-3, -18);
+        ctx.lineTo(-3 - legSwing, -3);
+        ctx.stroke();
+
+        // Perna dianteira
+        ctx.beginPath();
+        ctx.moveTo(3, -18);
+        ctx.lineTo(3 + legSwing, -3);
+        ctx.stroke();
+
+        // Sapatinhos dourados
+        ctx.fillStyle = "#f6d365";
+        ctx.beginPath();
+        ctx.ellipse(-3 - legSwing + dir * 1.5, -2.5, 4, 2.2, 0, 0, Math.PI * 2);
+        ctx.ellipse(3 + legSwing + dir * 1.5, -2.5, 4, 2.2, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Cabelos longos esvoaçantes (camada traseira)
+        ctx.fillStyle = "#3b1d2a";
+        ctx.beginPath();
+        ctx.moveTo(-10, -58);
+        ctx.quadraticCurveTo(-18 + hairWave, -34, -14 + hairWave * 1.3, -14);
+        ctx.quadraticCurveTo(0 + hairWave * 0.6, -10, 12 + hairWave * 0.8, -16);
+        ctx.quadraticCurveTo(14, -38, 10, -58);
+        ctx.closePath();
+        ctx.fill();
+
+        // Vestido fluido em tons de rosa encantado e lavanda
+        const dressGrad = ctx.createLinearGradient(0, -46, 0, -12);
+        dressGrad.addColorStop(0, "#f472b6");
+        dressGrad.addColorStop(0.55, "#ec4899");
+        dressGrad.addColorStop(1, "#fbcfe8");
+        ctx.fillStyle = dressGrad;
+
+        ctx.beginPath();
+        ctx.moveTo(-7, -45);
+        ctx.lineTo(7, -45);
+        ctx.quadraticCurveTo(15 + dressSway, -24, 18 + dressSway, -13);
+        ctx.quadraticCurveTo(0, -10, -18 + dressSway, -13);
+        ctx.quadraticCurveTo(-15 + dressSway, -24, -7, -45);
+        ctx.closePath();
+        ctx.fill();
+
+        // Faixa dourada na cintura com laço
+        ctx.strokeStyle = "#fde68a";
+        ctx.lineWidth = 2.4;
+        ctx.beginPath();
+        ctx.moveTo(-7.5, -36);
+        ctx.lineTo(7.5, -36);
+        ctx.stroke();
+
+        // Braços suaves
+        const armSwing = raely.isMoving ? -Math.sin(raely.walkCycle) * 4 : Math.sin(time * 2) * 1.5;
+        ctx.strokeStyle = "#f8d7ce";
+        ctx.lineWidth = 3.2;
+        ctx.beginPath();
+        ctx.moveTo(dir * 5, -43);
+        ctx.quadraticCurveTo(dir * 10 + armSwing, -33, dir * 8 + armSwing, -25);
+        ctx.stroke();
+
+        // Cabeça e rosto doce
+        ctx.fillStyle = "#fde2d9";
+        ctx.beginPath();
+        ctx.arc(0, -56, 11.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Franja e mechas frontais do cabelo
+        ctx.fillStyle = "#4a2335";
+        ctx.beginPath();
+        ctx.arc(0, -58, 12, Math.PI * 0.95, Math.PI * 2.05);
+        ctx.quadraticCurveTo(13, -46, 9 + hairWave * 0.4, -34);
+        ctx.quadraticCurveTo(7, -48, 3, -55);
+        ctx.quadraticCurveTo(-2, -52, -7, -55);
+        ctx.quadraticCurveTo(-11, -46, -10 + hairWave * 0.4, -34);
+        ctx.closePath();
+        ctx.fill();
+
+        // Laço brilhante no cabelo
+        ctx.fillStyle = "#f6d365";
+        const bowX = -dir * 7;
+        const bowY = -65;
+        ctx.beginPath();
+        ctx.ellipse(bowX - 3, bowY, 3.8, 2.2, -0.4, 0, Math.PI * 2);
+        ctx.ellipse(bowX + 3, bowY, 3.8, 2.2, 0.4, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Olhos expressivos e bochechas rosadas
+        const eyeOffsetX = dir * 3.5;
+        ctx.fillStyle = "#2d1624";
+        ctx.beginPath();
+        ctx.arc(eyeOffsetX - 3.2, -55, 1.4, 0, Math.PI * 2);
+        ctx.arc(eyeOffsetX + 3.2, -55, 1.4, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Brilho nos olhos
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.arc(eyeOffsetX - 2.8, -55.5, 0.5, 0, Math.PI * 2);
+        ctx.arc(eyeOffsetX + 3.6, -55.5, 0.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Rubor suave
+        ctx.fillStyle = "rgba(244, 114, 182, 0.45)";
+        ctx.beginPath();
+        ctx.ellipse(eyeOffsetX - 4.5, -52.2, 2.2, 1.2, 0, 0, Math.PI * 2);
+        ctx.ellipse(eyeOffsetX + 4.5, -52.2, 2.2, 1.2, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Sorriso delicado
+        ctx.strokeStyle = "#9d174d";
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.arc(eyeOffsetX, -52.2, 2.2, 0.15 * Math.PI, 0.85 * Math.PI);
+        ctx.stroke();
+
+        ctx.restore();
+      }
+
+      function drawCompanionLight() {
+        const gx = guide.x;
+        const gy = guide.y;
+
+        // Feixe de luz de apoio quando dissipa uma nuvem
+        if (guide.assistBeam > 0) {
+          ctx.save();
+          const beamGrad = ctx.createLinearGradient(gx, gy, guide.beamTargetX, guide.beamTargetY);
+          beamGrad.addColorStop(0, `rgba(254, 243, 199, ${guide.assistBeam * 0.85})`);
+          beamGrad.addColorStop(1, `rgba(244, 114, 182, ${guide.assistBeam * 0.2})`);
+          ctx.strokeStyle = beamGrad;
+          ctx.lineWidth = 6 * guide.assistBeam;
+          ctx.lineCap = "round";
+          ctx.beginPath();
+          ctx.moveTo(gx, gy);
+          ctx.lineTo(guide.beamTargetX, guide.beamTargetY);
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        // Halo do espírito de luz dourada
+        const halo = ctx.createRadialGradient(gx, gy, 1, gx, gy, 26);
+        halo.addColorStop(0, "rgba(255, 251, 235, 0.95)");
+        halo.addColorStop(0.45, "rgba(246, 211, 101, 0.45)");
+        halo.addColorStop(1, "rgba(246, 211, 101, 0)");
+        ctx.fillStyle = halo;
+        ctx.beginPath();
+        ctx.arc(gx, gy, 26, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Asinhas de borboleta estelar batendo suavemente
+        const wingFlap = Math.sin(time * 12) * 0.35 + 0.75;
+        ctx.fillStyle = "rgba(253, 230, 138, 0.75)";
+        ctx.beginPath();
+        ctx.ellipse(gx - 5 * wingFlap, gy - 2, 5 * wingFlap, 3, -0.4, 0, Math.PI * 2);
+        ctx.ellipse(gx + 5 * wingFlap, gy - 2, 5 * wingFlap, 3, 0.4, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Núcleo brilhante
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.arc(gx, gy, 3.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      function drawParticles() {
+        // Vaga-lumes
+        for (const f of fireflies) {
+          const glowAlpha = 0.35 + 0.65 * (0.5 + 0.5 * Math.sin(time * 3 + f.phase));
+          const grad = ctx.createRadialGradient(f.x, f.y, 0.5, f.x, f.y, f.r * 4);
+          grad.addColorStop(0, `rgba(254, 240, 138, ${glowAlpha})`);
+          grad.addColorStop(1, "rgba(254, 240, 138, 0)");
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.arc(f.x, f.y, f.r * 4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Explosões de estrelas e pétalas
+        for (const p of burstParticles) {
+          ctx.globalAlpha = Math.max(0, p.life);
+          ctx.fillStyle = p.color;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+      }
+
+      /* =========================================================================
+         10. LOOP PRINCIPAL A 60FPS
+         ========================================================================= */
+      let lastTimestamp = 0;
+
+      function gameLoop(timestamp) {
+        if (!lastTimestamp) lastTimestamp = timestamp;
+        const dt = Math.min((timestamp - lastTimestamp) / 1000, 0.05);
+        lastTimestamp = timestamp;
+
+        update(dt);
+
+        ctx.clearRect(0, 0, width, height);
+        drawSkyAndBackdrop();
+        drawGroundAndScene();
+
+        if (currentState === STATE.CH1_GARDEN) {
+          drawChapter1Stars();
+        } else if (currentState === STATE.CH2_CLOUDS) {
+          drawChapter2Clouds();
+        }
+
+        drawRaely();
+        drawCompanionLight();
+        drawParticles();
+
+        requestAnimationFrame(gameLoop);
+      }
+
+      window.addEventListener("resize", resizeCanvas);
+
+      window.onload = () => {
+        resizeCanvas();
+        initAmbientParticles();
+        raely.x = width * 0.22;
+        raely.targetX = raely.x;
+        raely.y = getGroundY();
+        guide.x = raely.x - 32;
+        guide.y = raely.y - 78;
+        requestAnimationFrame(gameLoop);
+      };
+    })();
   </script>
 </body>
 </html>
